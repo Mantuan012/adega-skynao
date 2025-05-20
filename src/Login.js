@@ -11,9 +11,11 @@ export default function Login() {
     e.preventDefault();
     try {
       if (modoCadastro) {
+        // Criando usuário
         await createUserWithEmailAndPassword(auth, email, senha);
         alert("Cadastro realizado com sucesso!");
       } else {
+        // Login do usuário
         await signInWithEmailAndPassword(auth, email, senha);
         alert("Login realizado com sucesso!");
       }

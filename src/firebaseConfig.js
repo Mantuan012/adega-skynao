@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+// Chave e informações de configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyC2bYNF1JsljbO_dP6SP5qqh-jdq9XQ_bs",
   authDomain: "adega-skynao.firebaseapp.com",
@@ -13,5 +14,5 @@ const firebaseConfig = {
 
 // Inicializando Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const auth = getAuth(app); // Para autenticação
+export const db = getFirestore(app); // Para banco de dados Firestore
