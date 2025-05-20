@@ -15,6 +15,7 @@ export default function MenuPedidos({ isDono }) {
         status: doc.data().status || "Em Preparo",
         itens: doc.data().itens,
         usuario: doc.data().usuario,
+        formaPagamento: doc.data().formaPagamento || "Não informado",
       }));
       setPedidos(data);
     });
@@ -31,6 +32,7 @@ export default function MenuPedidos({ isDono }) {
   }
 
   async function excluirPedido(idDoc) {
+    if (!window.confirm("Tem certeza que deseja excluir este pedido?")) return;
     try {
       await deleteDoc(doc(db, "pedidos", idDoc));
     } catch (error) {
@@ -41,11 +43,12 @@ export default function MenuPedidos({ isDono }) {
   return (
     <div>
       <h2>Menu de Pedidos</h2>
-      {pedidos.map(({ idDoc, idPedido, status, itens, usuario: usuarioPedido }) => (
+      {pedidos.map(({ idDoc, idPedido, status, itens, usuario: usuarioPedido, formaPagamento }) => (
         <div key={idDoc} className="cartao">
           <p><b>ID:</b> {idPedido}</p>
           <p><b>Status:</b> {status}</p>
           <p><b>Itens:</b> {itens.map(item => item.nome).join(", ")}</p>
+          <p><b>Forma de Pagamento:</b> {formaPagamento}</p>
 
           {isDono && (
             <>

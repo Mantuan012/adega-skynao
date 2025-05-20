@@ -8,7 +8,6 @@ import { collection, addDoc } from "firebase/firestore";
 import { FaUserCircle } from "react-icons/fa";
 import Toast from "./Toast";
 
-// Catálogo de produtos
 const produtos = [
   { id: 1, nome: "Whisky Red Label", preco: 120.0 },
   { id: 2, nome: "Vodka Absolut", preco: 90.0 },
@@ -16,7 +15,6 @@ const produtos = [
   { id: 4, nome: "Gin Tanqueray", preco: 150.0 },
 ];
 
-// Gera um ID de pedido aleatório com 4 dígitos
 function gerarIdPedido() {
   return Math.floor(1000 + Math.random() * 9000);
 }
@@ -29,8 +27,8 @@ function App() {
   const [mostrarConta, setMostrarConta] = useState(false);
   const [pedidoFinalizado, setPedidoFinalizado] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [formaPagamento, setFormaPagamento] = useState("");
 
-  // Monitora autenticação
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
       setUsuario(user);
@@ -38,14 +36,11 @@ function App() {
     });
   }, []);
 
-  // Só o admin (dono) vê botões de status
   const isDono = usuario?.email === "gobboe4@gmail.com";
 
-  // Toast de notificação
   const showToast = (msg) => setToastMessage(msg);
   const fecharToast = () => setToastMessage("");
 
-  // Navegação
   const mostrarMenuPedidos = () => {
     setMostrarPainel(true);
     setMostrarCatalogo(false);
@@ -55,29 +50,33 @@ function App() {
     setMostrarCatalogo(true);
   };
 
-  // Carrinho
   const adicionarAoCarrinho = (produto) =>
     setCarrinho((c) => [...c, produto]);
   const removerDoCarrinho = (idx) =>
     setCarrinho((c) => c.filter((_, i) => i !== idx));
 
-  // Finaliza pedido e grava no Firestore
   const finalizarPedido = async () => {
     if (!carrinho.length) {
       showToast("Seu carrinho está vazio!");
       return;
     }
+    if (!formaPagamento) {
+      showToast("Por favor, informe a forma de pagamento.");
+      return;
+    }
     const idPedido = gerarIdPedido();
     try {
       await addDoc(collection(db, "pedidos"), {
-        idPedido,                       // 4 dígitos
+        idPedido,
         usuario: usuario.email,
-        userId: usuario.uid,            // UID para permissões
+        userId: usuario.uid,
         itens: carrinho,
-        status: "Em Preparo",           // status inicial
+        formaPagamento,
+        status: "Em Preparo",
         data: new Date().toISOString(),
       });
       setCarrinho([]);
+      setFormaPagamento("");
       setPedidoFinalizado(true);
       showToast(`Pedido #${idPedido} criado com sucesso!`);
     } catch (err) {
@@ -86,7 +85,6 @@ function App() {
   };
   const fecharMensagem = () => setPedidoFinalizado(false);
 
-  // Se não logado, mostra login
   if (!usuario) return <Login />;
 
   return (
@@ -127,12 +125,10 @@ function App() {
           </div>
         </div>
 
-        {/* Painel de Conta */}
         {mostrarConta && (
           <UserInfo usuario={usuario} fechar={() => setMostrarConta(false)} />
         )}
 
-        {/* Conteúdo Principal */}
         {mostrarPainel ? (
           <MenuPedidos isDono={isDono} />
         ) : mostrarCatalogo ? (
@@ -168,7 +164,37 @@ function App() {
                     </li>
                   ))}
                 </ul>
-                <button onClick={finalizarPedido} className="botao">
+
+                <label htmlFor="formaPagamento" style={{ fontWeight: "bold" }}>
+                  Forma de Pagamento:
+                </label>
+                <select
+                  id="formaPagamento"
+                  value={formaPagamento}
+                  onChange={(e) => setFormaPagamento(e.target.value)}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    marginTop: "8px",
+                    borderRadius: "6px",
+                    border: "1px solid #00ff66",
+                    backgroundColor: "#222",
+                    color: "#e0e0e0",
+                    fontWeight: "600",
+                  }}
+                >
+                  <option value="">Selecione</option>
+                  <option value="Pix">Pix</option>
+                  <option value="Dinheiro">Dinheiro</option>
+                  <option value="Cartão">Cartão</option>
+                </select>
+
+                <button
+                  onClick={finalizarPedido}
+                  className="botao"
+                  style={{ marginTop: "12px" }}
+                >
                   ✅ Finalizar Pedido
                 </button>
               </div>
@@ -176,7 +202,6 @@ function App() {
           </>
         ) : null}
 
-        {/* Mensagem pós‐pedido */}
         {pedidoFinalizado && (
           <div className="cartao">
             <h2 className="titulo-principal">🎉 Pedido Criado!</h2>
@@ -187,7 +212,6 @@ function App() {
           </div>
         )}
 
-        {/* Toast de notificação */}
         {toastMessage && <Toast message={toastMessage} onClose={fecharToast} />}
       </div>
     </div>
