@@ -8,11 +8,24 @@ import { collection, addDoc } from "firebase/firestore";
 import { FaUserCircle } from "react-icons/fa";
 import Toast from "./Toast";
 
+// Produtos com imagem adicionada
 const produtos = [
-  { id: 1, nome: "Whisky Red Label", preco: 120.0 },
-  { id: 2, nome: "Vodka Absolut", preco: 90.0 },
-  { id: 3, nome: "Cerveja Heineken 600ml", preco: 12.0 },
-  { id: 4, nome: "Gin Tanqueray", preco: 150.0 },
+  { id: 1, nome: "Whisky Red Label", preco: 120.0, imagem: "/images/RedLabel.png" },
+  { id: 2, nome: "Vodka Absolut", preco: 90.0, imagem: "/images/VodkaAbsolut.png" },
+  { id: 3, nome: "Heineken 600ml", preco: 12.0, imagem: "/images/Heineken600ml.png" },
+  { id: 4, nome: "Coca-Cola 2L", preco: 8.0, imagem: "/images/CocaCola2L.png" },
+  { id: 5, nome: "Fanta Laranja 1,5L", preco: 7.0, imagem: "/images/FantaLaranja1,5L.jpg" },
+  { id: 6, nome: "Sprite 2L", preco: 7.0, imagem: "/images/Sprite2L.jpg" },
+  { id: 7, nome: "Energético Red Bull 250ml", preco: 15.0, imagem: "/images/RedBull250ml.jpg" },
+  { id: 8, nome: "Energético Monster 500ml", preco: 12.0, imagem: "/images/Monster500ml.jpg" },
+  { id: 9, nome: "Energético TNT 350ml", preco: 10.0, imagem: "/images/TNT350ml.png" },
+  { id: 10, nome: "Skol 350ml", preco: 5.0, imagem: "/images/Skol350ml.jpg" },
+  { id: 11, nome: "Budweiser 350ml", preco: 7.0, imagem: "/images/Budweiser350ml.jpg" },
+  { id: 12, nome: "Corona 330ml", preco: 10.0, imagem: "/images/Corona330ml.jpg" },
+  { id: 13, nome: "Stella Artois 330ml", preco: 9.0, imagem: "/images/StellaArtois330ml.jpg" },
+  { id: 14, nome: "Heineken 330ml", preco: 9.0, imagem: "/images/Heineken330ml.jpg" },
+  { id: 15, nome: "Cachaça 51", preco: 30.0, imagem: "/images/Cachaça51.jpg" },
+  { id: 16, nome: "Energético Monster Ultra 500ml", preco: 12.0, imagem: "/images/MonsterUltra.jpg"}
 ];
 
 function gerarIdPedido() {
@@ -137,6 +150,7 @@ function App() {
             <div className="produtos">
               {produtos.map((p) => (
                 <div key={p.id} className="cartao cartao-produto">
+                  <img src={p.imagem} alt={p.nome} className="imagem-produto" />
                   <h2>{p.nome}</h2>
                   <p>R$ {p.preco.toFixed(2)}</p>
                   <button
