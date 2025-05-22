@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { db, } from "./firebaseConfig";
+import React, { useEffect, useState, useRef } from "react";
+import { db } from "./firebaseConfig";
 import { collection, query, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import Toast from "./Toast";
 
 export default function MenuPedidos({ isDono, usuario }) {
   const [pedidos, setPedidos] = useState([]);
+  const [filtroStatus, setFiltroStatus] = useState("Todos");
+  const [toastMessage, setToastMessage] = useState("");
+  const pedidosAnteriores = useRef([]);
 
   useEffect(() => {
     const q = query(collection(db, "pedidos"));
@@ -18,9 +22,21 @@ export default function MenuPedidos({ isDono, usuario }) {
         formaPagamento: doc.data().formaPagamento || "Não informado",
       }));
 
-      // Filtra os pedidos se não for dono
+      // Filtra para usuário comum ver só seus pedidos
       if (!isDono && usuario) {
         data = data.filter(pedido => pedido.userId === usuario.uid);
+      }
+
+      // 🚨 Detectar novos pedidos (apenas para dono)
+      if (isDono) {
+        const idsAnteriores = pedidosAnteriores.current.map(p => p.idDoc);
+        const novosPedidos = data.filter(p => !idsAnteriores.includes(p.idDoc));
+
+        if (pedidosAnteriores.current.length > 0 && novosPedidos.length > 0) {
+          showToast(`🚨 ${novosPedidos.length} novo(s) pedido(s) recebido(s)!`);
+        }
+
+        pedidosAnteriores.current = data;
       }
 
       setPedidos(data);
@@ -28,6 +44,13 @@ export default function MenuPedidos({ isDono, usuario }) {
 
     return () => unsubscribe();
   }, [isDono, usuario]);
+
+  function showToast(msg) {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage("");
+    }, 5000); // Notificação dura 5 segundos
+  }
 
   async function alterarStatus(idDoc, novoStatus) {
     try {
@@ -46,7 +69,6 @@ export default function MenuPedidos({ isDono, usuario }) {
     }
   }
 
-  // Função para agrupar os itens
   function agruparItens(itens) {
     const agrupado = {};
 
@@ -61,12 +83,42 @@ export default function MenuPedidos({ isDono, usuario }) {
     return Object.values(agrupado);
   }
 
+  const pedidosFiltrados = pedidos.filter(pedido =>
+    filtroStatus === "Todos" || pedido.status === filtroStatus
+  );
+
   return (
     <div>
       <h2>Menu de Pedidos</h2>
-      {pedidos.length === 0 && <p>Nenhum pedido encontrado.</p>}
 
-      {pedidos.map(({ idDoc, idPedido, status, itens, usuario: usuarioPedido, formaPagamento }) => (
+      {/* Filtro */}
+      <div style={{ marginBottom: "20px" }}>
+        <label htmlFor="filtroStatus" style={{ fontWeight: "bold", marginRight: "10px" }}>
+          Filtrar por Status:
+        </label>
+        <select
+          id="filtroStatus"
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value)}
+          style={{
+            padding: "8px",
+            borderRadius: "6px",
+            border: "1px solid #00ff66",
+            backgroundColor: "#222",
+            color: "#e0e0e0",
+            fontWeight: "600",
+          }}
+        >
+          <option value="Todos">Todos</option>
+          <option value="Em Preparo">Em Preparo</option>
+          <option value="Saiu para Entrega">Saiu para Entrega</option>
+          <option value="Entregue">Entregue</option>
+        </select>
+      </div>
+
+      {pedidosFiltrados.length === 0 && <p>Nenhum pedido encontrado.</p>}
+
+      {pedidosFiltrados.map(({ idDoc, idPedido, status, itens, usuario: usuarioPedido, formaPagamento }) => (
         <div key={idDoc} className="cartao">
           <p><b>ID:</b> {idPedido}</p>
           <p><b>Status:</b> {status}</p>
@@ -114,6 +166,10 @@ export default function MenuPedidos({ isDono, usuario }) {
           )}
         </div>
       ))}
+
+      {toastMessage && (
+        <Toast message={toastMessage} onClose={() => setToastMessage("")} />
+      )}
     </div>
   );
 }
