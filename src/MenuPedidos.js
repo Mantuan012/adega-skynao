@@ -30,15 +30,12 @@ export default function MenuPedidos({ isDono }) {
         saidaTimestamp: doc.data().saidaTimestamp || null,
       }));
 
-      // 🔒 Filtra para usuário comum ver só seus próprios pedidos
       if (!isDono && usuario) {
         data = data.filter((pedido) => pedido.userId === usuario.uid);
       }
 
-      // 🔄 Ordenação dos pedidos do mais recente para o mais antigo
       data.sort((a, b) => new Date(b.data) - new Date(a.data));
 
-      // ⏳ Verificar se há pedidos que passaram de 2 horas no status "Saiu para Entrega"
       data.forEach(async (pedido) => {
         if (
           pedido.status === "Saiu para Entrega" &&
@@ -55,21 +52,18 @@ export default function MenuPedidos({ isDono }) {
     return () => unsubscribe();
   }, [isDono, usuario]);
 
-  // 🔄 Avançar status
   function proximoStatus(status) {
     if (status === "Em Preparo") return "Saiu para Entrega";
     if (status === "Saiu para Entrega") return "Entregue";
     return null;
   }
 
-  // 🔙 Status anterior (desfazer)
   function statusAnterior(status) {
     if (status === "Saiu para Entrega") return "Em Preparo";
     if (status === "Entregue") return "Saiu para Entrega";
     return null;
   }
 
-  // 🔥 Alterar status
   async function alterarStatus(idDoc, novoStatus) {
     try {
       const atualiza = { status: novoStatus };
@@ -85,7 +79,6 @@ export default function MenuPedidos({ isDono }) {
     }
   }
 
-  // 🗑️ Excluir pedido
   async function excluirPedido(idDoc) {
     if (!window.confirm("Tem certeza que deseja excluir este pedido?")) return;
     try {
@@ -95,7 +88,6 @@ export default function MenuPedidos({ isDono }) {
     }
   }
 
-  // 🎯 Aplicar filtro de status
   const pedidosFiltrados =
     filtroStatus === "Todos"
       ? pedidos
@@ -143,6 +135,11 @@ export default function MenuPedidos({ isDono }) {
             return acc;
           }, {});
 
+          const totalPedido = itens.reduce(
+            (acc, item) => acc + item.preco,
+            0
+          );
+
           return (
             <div key={idDoc} className="cartao">
               <p>
@@ -162,6 +159,9 @@ export default function MenuPedidos({ isDono }) {
               </p>
               <p>
                 <b>Usuário:</b> {usuarioPedido}
+              </p>
+              <p>
+                <b>Valor Total:</b> R$ {totalPedido.toFixed(2)}
               </p>
 
               {/* 🔥 Dono controla todos os pedidos */}
