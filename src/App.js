@@ -8,7 +8,6 @@ import { collection, addDoc } from "firebase/firestore";
 import { FaUserCircle } from "react-icons/fa";
 import Toast from "./Toast";
 
-// Produtos
 const produtos = [
   { id: 1, nome: "Whisky Red Label", preco: 120.0, imagem: "/images/RedLabel.png" },
   { id: 2, nome: "Vodka Absolut", preco: 90.0, imagem: "/images/VodkaAbsolut.png" },
@@ -33,6 +32,8 @@ function gerarIdPedido() {
 }
 
 function App() {
+  const FRETE_FIXO = 3.00;
+
   const [usuario, setUsuario] = useState(null);
   const [carrinho, setCarrinho] = useState([]);
   const [mostrarPainel, setMostrarPainel] = useState(false);
@@ -71,6 +72,9 @@ function App() {
   const removerDoCarrinho = (idx) =>
     setCarrinho((c) => c.filter((_, i) => i !== idx));
 
+  const totalCarrinho = carrinho.reduce((acc, item) => acc + item.preco, 0);
+  const totalComFrete = totalCarrinho + FRETE_FIXO;
+
   const finalizarPedido = async () => {
     if (!carrinho.length) {
       showToast("Seu carrinho está vazio!");
@@ -90,6 +94,7 @@ function App() {
         formaPagamento,
         status: "Em Preparo",
         data: new Date().toISOString(),
+        total: totalComFrete, // ✅ TOTAL COM FRETE INCLUÍDO
       });
       setCarrinho([]);
       setFormaPagamento("");
@@ -100,8 +105,6 @@ function App() {
     }
   };
   const fecharMensagem = () => setPedidoFinalizado(false);
-
-  const totalCarrinho = carrinho.reduce((acc, item) => acc + item.preco, 0);
 
   if (!usuario) return <Login />;
 
@@ -185,13 +188,14 @@ function App() {
                   ))}
                 </ul>
 
-                <p style={{
-                  fontWeight: "bold",
-                  fontSize: "1.1rem",
-                  marginTop: "10px",
-                  color: "#00ff66"
-                }}>
-                  🧾 Total: R$ {totalCarrinho.toFixed(2)}
+                <p style={{ fontWeight: "bold", marginTop: "10px", color: "#00ff66" }}>
+                  🧾 Subtotal: R$ {totalCarrinho.toFixed(2)}
+                </p>
+                <p style={{ fontWeight: "bold", color: "#00ff66" }}>
+                  🚚 Frete: R$ {FRETE_FIXO.toFixed(2)}
+                </p>
+                <p style={{ fontWeight: "bold", fontSize: "1.1rem", color: "#00ff66" }}>
+                  💰 Total: R$ {totalComFrete.toFixed(2)}
                 </p>
 
                 <label htmlFor="formaPagamento" style={{ fontWeight: "bold" }}>

@@ -28,6 +28,7 @@ export default function MenuPedidos({ isDono }) {
         formaPagamento: doc.data().formaPagamento || "Não informado",
         data: doc.data().data || "",
         saidaTimestamp: doc.data().saidaTimestamp || null,
+        total: doc.data().total || null, // ✅ captura total salvo
       }));
 
       if (!isDono && usuario) {
@@ -95,9 +96,8 @@ export default function MenuPedidos({ isDono }) {
 
   return (
     <div>
-      <h2>Menu de Pedidos</h2>
+      <h2 className="titulo-principal">📝 Menu de Pedidos</h2>
 
-      {/* 🔎 Filtro de status */}
       <div style={{ marginBottom: "20px" }}>
         <label>
           <b>Filtrar por Status:</b>{" "}
@@ -129,16 +129,16 @@ export default function MenuPedidos({ isDono }) {
           itens,
           usuario: usuarioPedido,
           formaPagamento,
+          total,
         }) => {
           const agrupamento = itens.reduce((acc, item) => {
             acc[item.nome] = (acc[item.nome] || 0) + 1;
             return acc;
           }, {});
 
-          const totalPedido = itens.reduce(
-            (acc, item) => acc + item.preco,
-            0
-          );
+          const totalPedido = total
+            ? total
+            : itens.reduce((acc, item) => acc + item.preco, 0) + 3;
 
           return (
             <div key={idDoc} className="cartao">
@@ -160,11 +160,10 @@ export default function MenuPedidos({ isDono }) {
               <p>
                 <b>Usuário:</b> {usuarioPedido}
               </p>
-              <p>
-                <b>Valor Total:</b> R$ {totalPedido.toFixed(2)}
+              <p style={{ fontWeight: "bold", color: "#00ff66" }}>
+                💰 Total: R$ {totalPedido.toFixed(2)}
               </p>
 
-              {/* 🔥 Dono controla todos os pedidos */}
               {isDono && (
                 <div style={{ marginTop: "10px" }}>
                   {proximoStatus(status) && (
@@ -214,7 +213,6 @@ export default function MenuPedidos({ isDono }) {
                 </div>
               )}
 
-              {/* ✅ Cliente pode confirmar entrega */}
               {!isDono && status === "Saiu para Entrega" && (
                 <div style={{ marginTop: "10px" }}>
                   <button
