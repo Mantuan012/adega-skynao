@@ -8,7 +8,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { FaUserCircle } from "react-icons/fa";
 import Toast from "./Toast";
 
-// Produtos com imagem adicionada
+// Produtos
 const produtos = [
   { id: 1, nome: "Whisky Red Label", preco: 120.0, imagem: "/images/RedLabel.png" },
   { id: 2, nome: "Vodka Absolut", preco: 90.0, imagem: "/images/VodkaAbsolut.png" },
@@ -63,8 +63,11 @@ function App() {
     setMostrarCatalogo(true);
   };
 
-  const adicionarAoCarrinho = (produto) =>
+  const adicionarAoCarrinho = (produto) => {
     setCarrinho((c) => [...c, produto]);
+    showToast(`🛒 ${produto.nome} adicionado ao carrinho!`);
+  };
+
   const removerDoCarrinho = (idx) =>
     setCarrinho((c) => c.filter((_, i) => i !== idx));
 
@@ -98,12 +101,13 @@ function App() {
   };
   const fecharMensagem = () => setPedidoFinalizado(false);
 
+  const totalCarrinho = carrinho.reduce((acc, item) => acc + item.preco, 0);
+
   if (!usuario) return <Login />;
 
   return (
     <div className="container">
       <div className="painel">
-        {/* Cabeçalho */}
         <div className="header-logo">
           <img src="/LogoAdega.png" alt="Logo Adega Skynão" />
           <div>
@@ -112,7 +116,6 @@ function App() {
           </div>
         </div>
 
-        {/* Top Bar */}
         <div className="top-bar">
           <div className="top-bar-buttons">
             <button onClick={mostrarMenuPedidos} className="botao">
@@ -120,6 +123,9 @@ function App() {
             </button>
             <button onClick={voltarAoCatalogo} className="botao">
               Catálogo
+              {carrinho.length > 0 && (
+                <span className="badge-carrinho">{carrinho.length}</span>
+              )}
             </button>
           </div>
           <div className="top-bar-actions">
@@ -178,6 +184,15 @@ function App() {
                     </li>
                   ))}
                 </ul>
+
+                <p style={{
+                  fontWeight: "bold",
+                  fontSize: "1.1rem",
+                  marginTop: "10px",
+                  color: "#00ff66"
+                }}>
+                  🧾 Total: R$ {totalCarrinho.toFixed(2)}
+                </p>
 
                 <label htmlFor="formaPagamento" style={{ fontWeight: "bold" }}>
                   Forma de Pagamento:
