@@ -1,131 +1,91 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { db, auth } from "./firebaseConfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "./firebaseConfig";
 
-export default function UserInfo({ usuario, fechar }) {
-  const [form, setForm] = useState({
+export default function UserInfo({ fechar }) {
+  const usuario = auth.currentUser;
+  const [dados, setDados] = useState({
     nome: "",
-    telefone: "",
     endereco: "",
+    referencia: "",
+    telefone: "",
+    email: usuario?.email || "",
   });
-  const [loading, setLoading] = useState(true);
-  const [editando, setEditando] = useState(false);
-  const [backup, setBackup] = useState(null);
 
-  // 1️⃣ Busca os dados do usuário no Firestore ao montar
   useEffect(() => {
-    if (!usuario) return;
-
-    const fetchDados = async () => {
+    const carregarDados = async () => {
       const ref = doc(db, "usuarios", usuario.uid);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        setForm(snap.data());
+        setDados(snap.data());
       }
-      setLoading(false);
     };
-
-    fetchDados();
+    if (usuario) carregarDados();
   }, [usuario]);
 
-  // 2️⃣ Atualiza o state do formulário
-  const handleChange = (e) =>
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-
-  // 3️⃣ Entra no modo edição, guardando um backup
-  const iniciarEdicao = () => {
-    setBackup(form);
-    setEditando(true);
-  };
-
-  // 4️⃣ Cancela edição e restaura backup
-  const cancelarEdicao = () => {
-    setForm(backup);
-    setEditando(false);
-  };
-
-  // 5️⃣ Salva no Firestore e sai do modo edição
-  const salvarEdicao = async () => {
+  const salvar = async () => {
+    if (!dados.nome || !dados.endereco || !dados.telefone) {
+      alert("Preencha todos os campos obrigatórios.");
+      return;
+    }
     try {
-      const ref = doc(db, "usuarios", usuario.uid);
-      await setDoc(ref, form, { merge: true });
-      setEditando(false);
-    } catch (err) {
-      console.error("Erro ao salvar perfil:", err);
-      alert("Não foi possível salvar. Tente novamente.");
+      await setDoc(doc(db, "usuarios", usuario.uid), dados);
+      alert("Informações salvas com sucesso.");
+      fechar();
+    } catch (error) {
+      console.error("Erro ao salvar dados:", error);
+      alert("Erro ao salvar dados.");
     }
   };
 
-  if (loading) return <p>Carregando informações...</p>;
-
   return (
-    <div className="cartao user-info">
-      {/* Botão Fechar no topo */}
-      <button className="botao botao-vermelho" onClick={fechar}>
-        Fechar
+    <div className="user-info">
+      <button onClick={fechar} className="botao botao-vermelho">
+        ✖️ Fechar
       </button>
+      <h3>Seus Dados</h3>
 
-      <h3>Suas Informações</h3>
-
-      {/* Nome */}
-      <label>Nome:</label>
-      {editando ? (
+      <label>
+        Nome Completo*:
         <input
-          name="nome"
-          value={form.nome}
-          onChange={handleChange}
-          placeholder="Seu nome"
+          value={dados.nome}
+          onChange={(e) => setDados({ ...dados, nome: e.target.value })}
         />
-      ) : (
-        <p>{form.nome || "Não informado"}</p>
-      )}
+      </label>
 
-      {/* Telefone */}
-      <label>Telefone:</label>
-      {editando ? (
+      <label>
+        Endereço Completo*:
         <input
-          name="telefone"
-          value={form.telefone}
-          onChange={handleChange}
-          placeholder="(00) 00000-0000"
+          value={dados.endereco}
+          onChange={(e) => setDados({ ...dados, endereco: e.target.value })}
         />
-      ) : (
-        <p>{form.telefone || "Não informado"}</p>
-      )}
+      </label>
 
-      {/* Endereço */}
-      <label>Endereço:</label>
-      {editando ? (
+      <label>
+        Ponto de Referência (opcional):
         <input
-          name="endereco"
-          value={form.endereco}
-          onChange={handleChange}
-          placeholder="Seu endereço"
+          value={dados.referencia}
+          onChange={(e) => setDados({ ...dados, referencia: e.target.value })}
         />
-      ) : (
-        <p>{form.endereco || "Não informado"}</p>
-      )}
+      </label>
 
-      {/* Botões de ação */}
-      <div style={{ marginTop: "1rem" }}>
-        {!editando ? (
-          <button className="botao" onClick={iniciarEdicao}>
-            Editar
-          </button>
-        ) : (
-          <>
-            <button className="botao" onClick={salvarEdicao}>
-              Salvar
-            </button>
-            <button
-              className="botao botao-vermelho"
-              onClick={cancelarEdicao}
-              style={{ marginLeft: "0.5rem" }}
-            >
-              Cancelar
-            </button>
-          </>
-        )}
+      <label>
+        Telefone / WhatsApp*:
+        <input
+          value={dados.telefone}
+          onChange={(e) => setDados({ ...dados, telefone: e.target.value })}
+        />
+      </label>
+
+      <label>
+        E-mail:
+        <p>{dados.email}</p>
+      </label>
+
+      <div className="botoes-acoes">
+        <button onClick={salvar} className="botao">
+          💾 Salvar Dados
+        </button>
       </div>
     </div>
   );

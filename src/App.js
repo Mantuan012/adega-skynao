@@ -4,7 +4,7 @@ import MenuPedidos from "./MenuPedidos";
 import UserInfo from "./UserInfo";
 import { auth, db } from "./firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDoc, doc } from "firebase/firestore";
 import { FaUserCircle } from "react-icons/fa";
 import Toast from "./Toast";
 
@@ -84,6 +84,24 @@ function App() {
       showToast("Por favor, informe a forma de pagamento.");
       return;
     }
+
+    // 🔥 Verifica se os dados do usuário estão preenchidos
+    const userRef = doc(db, "usuarios", usuario.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      showToast("Complete suas informações antes de fazer pedidos.");
+      setMostrarConta(true);
+      return;
+    }
+
+    const dadosUsuario = userSnap.data();
+    if (!dadosUsuario.nome || !dadosUsuario.endereco || !dadosUsuario.telefone) {
+      showToast("Complete suas informações antes de fazer pedidos.");
+      setMostrarConta(true);
+      return;
+    }
+
     const idPedido = gerarIdPedido();
     try {
       await addDoc(collection(db, "pedidos"), {
@@ -94,7 +112,7 @@ function App() {
         formaPagamento,
         status: "Em Preparo",
         data: new Date().toISOString(),
-        total: totalComFrete, // ✅ TOTAL COM FRETE INCLUÍDO
+        total: totalComFrete,
       });
       setCarrinho([]);
       setFormaPagamento("");
