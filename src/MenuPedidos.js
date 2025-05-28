@@ -28,15 +28,30 @@ export default function MenuPedidos({ isDono }) {
         formaPagamento: doc.data().formaPagamento || "Não informado",
         data: doc.data().data || "",
         saidaTimestamp: doc.data().saidaTimestamp || null,
-        total: doc.data().total || null, // ✅ captura total salvo
+        total: doc.data().total || null,
       }));
 
       if (!isDono && usuario) {
         data = data.filter((pedido) => pedido.userId === usuario.uid);
       }
 
-      data.sort((a, b) => new Date(b.data) - new Date(a.data));
+      // 🔥 Apagar pedidos com mais de 12 horas
+      data.forEach(async (pedido) => {
+        const dataPedido = new Date(pedido.data);
+        const agora = new Date();
+        const diferencaHoras = (agora - dataPedido) / (1000 * 60 * 60);
 
+        if (diferencaHoras >= 12) {
+          try {
+            await deleteDoc(doc(db, "pedidos", pedido.idDoc));
+            console.log(`🔥 Pedido ${pedido.idPedido} deletado por ter mais de 12 horas.`);
+          } catch (error) {
+            console.error("Erro ao deletar pedido antigo:", error);
+          }
+        }
+      });
+
+      // 🔥 Manter lógica de autoconfirmação de entrega após 2 horas no status "Saiu para Entrega"
       data.forEach(async (pedido) => {
         if (
           pedido.status === "Saiu para Entrega" &&
@@ -47,6 +62,8 @@ export default function MenuPedidos({ isDono }) {
         }
       });
 
+      // 🔥 Filtrar e ordenar
+      data.sort((a, b) => new Date(b.data) - new Date(a.data));
       setPedidos(data);
     });
 
