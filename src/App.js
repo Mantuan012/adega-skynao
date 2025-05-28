@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Login from "./Login";
 import MenuPedidos from "./MenuPedidos";
 import UserInfo from "./UserInfo";
+import Dashboard from "./Dashboard";
 import { auth, db } from "./firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, addDoc, getDoc, doc } from "firebase/firestore";
@@ -39,6 +40,7 @@ function App() {
   const [mostrarPainel, setMostrarPainel] = useState(false);
   const [mostrarCatalogo, setMostrarCatalogo] = useState(true);
   const [mostrarConta, setMostrarConta] = useState(false);
+  const [mostrarDashboard, setMostrarDashboard] = useState(false);
   const [pedidoFinalizado, setPedidoFinalizado] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("");
@@ -58,10 +60,12 @@ function App() {
   const mostrarMenuPedidos = () => {
     setMostrarPainel(true);
     setMostrarCatalogo(false);
+    setMostrarDashboard(false);
   };
   const voltarAoCatalogo = () => {
     setMostrarPainel(false);
     setMostrarCatalogo(true);
+    setMostrarDashboard(false);
   };
 
   const adicionarAoCarrinho = (produto) => {
@@ -85,7 +89,6 @@ function App() {
       return;
     }
 
-    // 🔥 Verifica se os dados do usuário estão preenchidos
     const userRef = doc(db, "usuarios", usuario.uid);
     const userSnap = await getDoc(userRef);
 
@@ -122,6 +125,7 @@ function App() {
       showToast("Erro ao salvar pedido: " + err.message);
     }
   };
+
   const fecharMensagem = () => setPedidoFinalizado(false);
 
   if (!usuario) return <Login />;
@@ -139,6 +143,18 @@ function App() {
 
         <div className="top-bar">
           <div className="top-bar-buttons">
+            {isDono && (
+              <button
+                onClick={() => {
+                  setMostrarDashboard(true);
+                  setMostrarPainel(false);
+                  setMostrarCatalogo(false);
+                }}
+                className="botao"
+              >
+                Dashboard
+              </button>
+            )}
             <button onClick={mostrarMenuPedidos} className="botao">
               Menu de Pedidos
             </button>
@@ -169,7 +185,9 @@ function App() {
           <UserInfo usuario={usuario} fechar={() => setMostrarConta(false)} />
         )}
 
-        {mostrarPainel ? (
+        {mostrarDashboard ? (
+          <Dashboard fechar={() => setMostrarDashboard(false)} />
+        ) : mostrarPainel ? (
           <MenuPedidos isDono={isDono} usuario={usuario} />
         ) : mostrarCatalogo ? (
           <>
