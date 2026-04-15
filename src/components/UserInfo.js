@@ -1,24 +1,20 @@
 import React, { useEffect, useState } from "react";
-// Corrigido: Importar 'auth' também
 import { db, auth } from "../firebase/firebaseConfig"; 
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
-// Renomeado para seguir a convenção de nomes de componentes
-export default function UserInfo({ fechar }) { 
-  // Usa o 'usuario' do auth diretamente, como no seu código original
+// --- MUDANÇA 1: Recebendo 'showToast' nas props ---
+export default function UserInfo({ fechar, showToast }) { 
   const usuario = auth.currentUser; 
 
-  // Estados individuais em vez de um objeto 'dados'
   const [nome, setNome] = useState("");
   const [rua, setRua] = useState(""); 
   const [numero, setNumero] = useState(""); 
   const [bairro, setBairro] = useState(""); 
   const [referencia, setReferencia] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [editando, setEditando] = useState(false); // Adicionado modo de edição
-  const [carregando, setCarregando] = useState(true); // Adicionado estado de carregamento
+  const [editando, setEditando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
 
-  // E-mail vem do auth e não muda
   const email = usuario?.email || ""; 
 
   useEffect(() => {
@@ -29,46 +25,42 @@ export default function UserInfo({ fechar }) {
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const data = snap.data();
-          // Preenche os estados individuais
           setNome(data.nome || "");
           setTelefone(data.telefone || "");
           setReferencia(data.referencia || "");
-
-          // Lógica para preencher os novos campos de endereço
           if (data.rua) { 
             setRua(data.rua || "");
             setNumero(data.numero || "");
             setBairro(data.bairro || "");
-          } else if (data.endereco) { // Tenta separar o endereço antigo
+          } else if (data.endereco) { 
             const matchNumero = data.endereco.match(/,\s*n?º?\s*(\d+)/i);
             const numeroExtraido = matchNumero ? matchNumero[1] : "";
             const ruaExtraida = matchNumero ? data.endereco.substring(0, matchNumero.index).trim() : data.endereco.trim();
             setRua(ruaExtraida);
             setNumero(numeroExtraido);
-            setBairro(""); // Bairro não tem como adivinhar
+            setBairro(""); 
           } else {
              setRua("");
              setNumero("");
              setBairro("");
           }
-          setEditando(false); // Começa em modo visualização
+          setEditando(false); 
         } else {
-          setEditando(true); // Se não tem dados, começa editando
+          setEditando(true); 
         }
         setCarregando(false);
       }
     };
     carregarDados();
-  }, [usuario]); // Depende do usuário
+  }, [usuario]); 
 
   const salvar = async () => {
-    // Validação usando os estados individuais
+    // --- MUDANÇA 2: Substituindo 'alert' por 'showToast' ---
     if (!nome || !rua || !numero || !bairro || !telefone) { 
-      alert("Preencha todos os campos obrigatórios (*).");
+      showToast("Preencha todos os campos obrigatórios (*).", 'error'); // <-- MUDADO
       return;
     }
     try {
-      // Salva os estados individuais no Firestore
       await setDoc(doc(db, "usuarios", usuario.uid), {
         nome,
         rua,
@@ -76,35 +68,33 @@ export default function UserInfo({ fechar }) {
         bairro,
         referencia,
         telefone,
-      }, { merge: true }); // Merge é importante para não apagar outros campos
+      }, { merge: true }); 
 
-      alert("Informações salvas com sucesso.");
-      setEditando(false); // Volta para visualização
-      fechar(); // Fecha o modal
+      showToast("Informações salvas com sucesso.", 'success'); // <-- MUDADO
+      setEditando(false); 
+      fechar(); 
     } catch (error) {
       console.error("Erro ao salvar dados:", error);
-      alert("Erro ao salvar dados.");
+      showToast("Erro ao salvar dados. Tente novamente.", 'error'); // <-- MUDADO
     }
   };
 
   if (carregando) {
     return (
-      <div className="user-info user-info-container"> {/* Aplica a classe base */}
+      <div className="user-info user-info-container"> 
         <h3>Carregando seus dados...</h3>
       </div>
     );
   }
 
   return (
-    // Usa as novas classes CSS para layout
     <div className="user-info user-info-container"> 
       <h3>Seus Dados</h3>
-      {/* Botão fechar agora usa a classe CSS */}
       <button onClick={fechar} className="botao botao-vermelho close-button">
         Fechar
       </button>
 
-      {/* Estrutura de campos atualizada */}
+      {/* (Formulário sem mudanças) */}
       <div className="user-info-field">
         <label htmlFor="nome">Nome Completo*:</label>
         {editando ? (
@@ -114,7 +104,6 @@ export default function UserInfo({ fechar }) {
         )}
       </div>
 
-      {/* Grid para Rua e Número */}
       <div className="address-grid">
         <div className="user-info-field">
           <label htmlFor="rua">Rua*:</label>
@@ -163,11 +152,9 @@ export default function UserInfo({ fechar }) {
 
       <div className="user-info-field">
         <label htmlFor="email">E-mail:</label>
-        {/* Mostra o e-mail (não editável) */}
         <p>{email}</p> 
       </div>
 
-      {/* Botões Salvar/Editar agora usam a classe CSS */}
       <div className="botoes-acoes"> 
         {editando ? (
           <button onClick={salvar} className="botao">

@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+// Removemos a importação do storage
 
 // Chave e informações de configuração do Firebase
 const firebaseConfig = {
@@ -16,3 +17,4 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app); // Para autenticação
 export const db = getFirestore(app); // Para banco de dados Firestore
+// Removemos a exportação do storage

@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react';
+// Importa os ícones de sucesso e erro
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
-export default function Toast({ message, onClose }) {
+export default function Toast({ toast, onClose }) {
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
@@ -8,22 +11,25 @@ export default function Toast({ message, onClose }) {
     return () => clearTimeout(timer);
   }, [onClose]);
 
+  // Define o ícone e a classe CSS com base no 'toast.type'
+  const isError = toast.type === 'error';
+  
+  const icon = isError 
+    ? <FaTimesCircle size={20} /> 
+    : <FaCheckCircle size={20} />;
+    
+  const containerClass = isError 
+    ? 'toast-container toast-error' 
+    : 'toast-container toast-success';
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: '20px',
-      right: '20px',
-      backgroundColor: '#00cc44',
-      color: 'white',
-      padding: '12px 20px',
-      borderRadius: '8px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-      zIndex: 9999,
-      fontWeight: 'bold',
-      fontSize: '1rem',
-      userSelect: 'none',
-    }}>
-      {message}
+    <div className={containerClass}>
+      <div className="toast-icon">
+        {icon}
+      </div>
+      <div className="toast-message">
+        {toast.message}
+      </div>
     </div>
   );
 }

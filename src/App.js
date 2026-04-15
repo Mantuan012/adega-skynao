@@ -5,33 +5,16 @@ import UserInfo from "./components/UserInfo";
 import Dashboard from "./pages/Dashboard";
 import CartPage from "./pages/CartPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
-import Footer from "./components/Footer"; 
+import CombosPage from "./pages/CombosPage";
+import PerfilEntregador from "./pages/PerfilEntregador.js";
+import Footer from "./components/Footer";
 import Banner from "./components/Banner"; 
 import { auth, db } from "./firebase/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, addDoc, getDoc, doc } from "firebase/firestore";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaSearch, FaClock } from "react-icons/fa"; 
 import Toast from "./components/Toast";
-
-// Lista de produtos com "estoque"
-const produtos = [
-  { id: 1, nome: "Whisky Red Label", preco: 120.0, imagem: "/images/RedLabel.png", volume: 2, estoque: 10 },
-  { id: 2, nome: "Vodka Absolut", preco: 90.0, imagem: "/images/VodkaAbsolut.png", volume: 2, estoque: 15 },
-  { id: 15, nome: "Cachaça 51", preco: 30.0, imagem: "/images/Cachaça51.jpg", volume: 2, estoque: 20 },
-  { id: 3, nome: "Heineken 600ml", preco: 12.0, imagem: "/images/Heineken600ml.png", volume: 1, estoque: 50 },
-  { id: 4, nome: "Coca-Cola 2L", preco: 8.0, imagem: "/images/CocaCola2L.png", volume: 1, estoque: 100 },
-  { id: 5, nome: "Fanta Laranja 1,5L", preco: 7.0, imagem: "/images/FantaLaranja1,5L.jpg", volume: 1, estoque: 30 },
-  { id: 6, nome: "Sprite 2L", preco: 7.0, imagem: "/images/Sprite2L.jpg", volume: 1, estoque: 30 },
-  { id: 8, nome: "Monster 500ml", preco: 12.0, imagem: "/images/Monster500ml.jpg", volume: 1, estoque: 40 },
-  { id: 16, nome: "Monster Ultra 500ml", preco: 12.0, imagem: "/images/MonsterUltra.jpg", volume: 1, estoque: 5 },
-  { id: 7, nome: "Red Bull 250ml", preco: 15.0, imagem: "/images/RedBull250ml.jpg", volume: 0.5, estoque: 50 },
-  { id: 9, nome: "TNT 350ml", preco: 10.0, imagem: "/images/TNT350ml.png", volume: 0.5, estoque: 50 },
-  { id: 10, nome: "Skol 350ml", preco: 5.0, imagem: "/images/Skol350ml.jpg", volume: 0.5, estoque: 100 },
-  { id: 11, nome: "Budweiser 350ml", preco: 7.0, imagem: "/images/Budweiser350ml.jpg", volume: 0.5, estoque: 100 },
-  { id: 12, nome: "Corona 330ml", preco: 10.0, imagem: "/images/Corona330ml.jpg", volume: 0.5, estoque: 30 },
-  { id: 13, nome: "Stella Artois 330ml", preco: 9.0, imagem: "/images/StellaArtois330ml.jpg", volume: 0.5, estoque: 30 },
-  { id: 14, nome: "Heineken 330ml", preco: 9.0, imagem: "/images/Heineken330ml.jpg", volume: 0.5, estoque: 50 }
-];
+import { produtos } from './data/Produtos.js'; 
 
 function gerarIdPedido() {
   return Math.floor(1000 + Math.random() * 9000);
@@ -41,15 +24,22 @@ function App() {
   const [usuario, setUsuario] = useState(null);
   const [dadosUsuario, setDadosUsuario] = useState(null);
   const [carrinho, setCarrinho] = useState([]);
+  
   const [mostrarPainel, setMostrarPainel] = useState(false);
-  const [mostrarCatalogo, setMostrarCatalogo] = useState(true);
+  const [mostrarCatalogo, setMostrarCatalogo] = useState(false); 
   const [mostrarConta, setMostrarConta] = useState(false);
   const [mostrarDashboard, setMostrarDashboard] = useState(false);
   const [mostrarCarrinho, setMostrarCarrinho] = useState(false);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+  const [mostrarCombos, setMostrarCombos] = useState(false);
+  const [mostrarPerfilEntregador, setMostrarPerfilEntregador] = useState(false);
+
   const [pedidoFinalizado, setPedidoFinalizado] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const [formaPagamento, setFormaPagamento] = useState("");
+  const [toast, setToast] = useState(null); 
+  
+  const [termoBusca, setTermoBusca] = useState("");
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
 
   const fetchUserData = async (uid) => {
     if (uid) {
@@ -63,11 +53,17 @@ function App() {
     }
   };
 
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+  };
+  const fecharToast = () => {
+    setToast(null);
+  };
+  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUsuario(user);
       if (user) {
-        showToast("Login realizado com sucesso!");
         fetchUserData(user.uid); 
       } else {
         setDadosUsuario(null); 
@@ -76,47 +72,50 @@ function App() {
     return () => unsubscribe(); 
   }, []); 
 
-  const isDono = usuario?.email === "pesquisaciencia012@gmail.com";
+  // AGORA O SISTEMA VERIFICA O CARGO NO BANCO DE DADOS
+  const isDono = dadosUsuario?.tipo === "admin";
+  const isEntregador = dadosUsuario?.tipo === "entregador";
 
-  const showToast = (msg) => setToastMessage(msg);
-  const fecharToast = () => setToastMessage("");
+  const resetarNavegacao = () => {
+    setMostrarPainel(false);
+    setMostrarCatalogo(false);
+    setMostrarConta(false);
+    setMostrarDashboard(false);
+    setMostrarCarrinho(false);
+    setProdutoSelecionado(null); 
+    setMostrarCombos(false); 
+    setMostrarPerfilEntregador(false);
+    setPedidoFinalizado(false);
+  };
 
-  // Funções de navegação
-  const mostrarMenuPedidos = () => {
-    setMostrarPainel(true);
-    setMostrarCatalogo(false);
-    setMostrarDashboard(false);
-    setMostrarCarrinho(false);
-    setProdutoSelecionado(null); 
-  };
-  const voltarAoCatalogo = () => {
-    setMostrarPainel(false);
-    setMostrarCatalogo(true);
-    setMostrarDashboard(false);
-    setMostrarCarrinho(false);
-    setProdutoSelecionado(null); 
-  };
-  const mostrarPaginaCarrinho = () => {
-    setMostrarPainel(false);
-    setMostrarCatalogo(false);
-    setMostrarDashboard(false);
-    setMostrarCarrinho(true);
-    setProdutoSelecionado(null); 
-  };
-  const mostrarDetalhesProduto = (produto) => {
-    setProdutoSelecionado(produto);
-    setMostrarPainel(false);
-    setMostrarCatalogo(false);
-    setMostrarDashboard(false);
-    setMostrarCarrinho(false);
-  };
+  // ROTEAMENTO AUTOMÁTICO DE HOME POR PERFIL (DINÂMICO)
+  useEffect(() => {
+    if (usuario && dadosUsuario !== undefined) {
+      resetarNavegacao();
+      if (dadosUsuario?.tipo === "entregador") {
+        setMostrarPerfilEntregador(true); 
+      } else if (dadosUsuario?.tipo === "admin") {
+        setMostrarPainel(true); 
+      } else {
+        setMostrarCatalogo(true); 
+      }
+    }
+  }, [usuario, dadosUsuario]);
+
+  const mostrarMenuPedidos = () => { resetarNavegacao(); setMostrarPainel(true); };
+  const voltarAoCatalogo = () => { resetarNavegacao(); setMostrarCatalogo(true); };
+  const mostrarPaginaCarrinho = () => { resetarNavegacao(); setMostrarCarrinho(true); };
+  const mostrarDetalhesProduto = (produto) => { resetarNavegacao(); setProdutoSelecionado(produto); };
+  const mostrarPaginaCombos = () => { resetarNavegacao(); setMostrarCombos(true); };
 
   const adicionarAoCarrinho = (produto) => {
-    // (Lógica de adicionar ao carrinho com validação de estoque - sem mudanças)
     const itemNoCarrinho = carrinho.find((item) => item.id === produto.id);
     const quantidadeAtual = itemNoCarrinho ? itemNoCarrinho.quantidade : 0;
-    if (quantidadeAtual >= produto.estoque) {
-      showToast(`❌ Limite de estoque atingido para ${produto.nome}!`);
+    
+    const estoqueDisponivel = produto.tipo === 'combo' ? produto.estoque : produto.estoque;
+
+    if (quantidadeAtual >= estoqueDisponivel) {
+      showToast(`❌ Limite de estoque atingido para ${produto.nome}!`, 'error'); 
       return; 
     }
     setCarrinho((carrinhoAtual) => {
@@ -131,11 +130,66 @@ function App() {
         return [...carrinhoAtual, { ...produto, quantidade: 1 }];
       }
     });
-    showToast(`🛒 ${produto.nome} adicionado ao carrinho!`);
+    
+    if (mostrarCatalogo || mostrarCombos || produtoSelecionado) {
+        showToast(`🛒 ${produto.nome} adicionado ao carrinho!`); 
+    }
+  };
+
+  const adicionarComboAoCarrinho = (combo) => {
+    let menorEstoquePossivel = Infinity;
+    let volumeTotalCombo = 0;
+
+    combo.itens.forEach((itemCombo) => {
+      const produtoReal = produtos.find((p) => p.id === itemCombo.id);
+      if (produtoReal) {
+        const maxUnidades = Math.floor(produtoReal.estoque / itemCombo.qtd);
+        if (maxUnidades < menorEstoquePossivel) {
+          menorEstoquePossivel = maxUnidades;
+        }
+        volumeTotalCombo += (produtoReal.volume * itemCombo.qtd);
+      }
+    });
+
+    if (menorEstoquePossivel === 0) {
+        showToast("❌ Um dos itens do combo está esgotado!", "error");
+        return;
+    }
+
+    setCarrinho((prevCarrinho) => {
+      const itemNoCarrinho = prevCarrinho.find((i) => i.id === combo.id);
+      const qtdAtual = itemNoCarrinho ? itemNoCarrinho.quantidade : 0;
+
+      if (qtdAtual + 1 > menorEstoquePossivel) {
+        showToast("❌ Estoque insuficiente para adicionar mais desse combo!", "error");
+        return prevCarrinho;
+      }
+
+      showToast(`🔥 ${combo.nome} adicionado com sucesso!`);
+
+      if (itemNoCarrinho) {
+        return prevCarrinho.map((item) =>
+          item.id === combo.id
+            ? { ...item, quantidade: item.quantidade + 1 }
+            : item
+        );
+      } else {
+        return [...prevCarrinho, { 
+            id: combo.id,
+            nome: combo.nome,
+            preco: combo.preco, 
+            imagem: combo.imagem,
+            quantidade: 1,
+            volume: volumeTotalCombo,
+            estoque: menorEstoquePossivel, 
+            tipo: 'combo',
+            itens: combo.itens 
+        }];
+      }
+    });
   };
 
   const removerDoCarrinho = (produtoId) => {
-    // (Lógica de remover do carrinho - sem mudanças)
     setCarrinho((carrinhoAtual) => {
       const itemParaRemover = carrinhoAtual.find((item) => item.id === produtoId);
       if (itemParaRemover.quantidade === 1) {
@@ -149,143 +203,171 @@ function App() {
     });
   };
 
-  const totalCarrinho = carrinho.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
-  const totalItensBadge = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
+  const calcularTotalItem = (item) => {
+    if (item.tipo === 'combo') {
+      return item.preco * item.quantidade;
+    }
+    if (item.fardo && item.quantidade >= item.fardo.quantidade) {
+      const numFardos = Math.floor(item.quantidade / item.fardo.quantidade);
+      const resto = item.quantidade % item.fardo.quantidade;
+      return (numFardos * item.fardo.preco) + (resto * item.preco);
+    }
+    return item.preco * item.quantidade;
+  };
 
-  // Lógica do Frete Dinâmico (sem mudanças)
+  const totalCarrinho = carrinho.reduce((acc, item) => acc + calcularTotalItem(item), 0);
+  const totalItensBadge = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
   const CAPACIDADE_ENTREGADOR = 12; 
   const CUSTO_VIAGEM = 3.00;       
   const volumeTotal = carrinho.reduce((acc, item) => acc + (item.volume * item.quantidade), 0);
   const viagensNecessarias = Math.ceil(volumeTotal / CAPACIDADE_ENTREGADOR);
   const freteFinal = viagensNecessarias * CUSTO_VIAGEM;
   const totalComFrete = totalCarrinho + freteFinal;
-
-  const hasAddress = dadosUsuario && dadosUsuario.nome && dadosUsuario.endereco && dadosUsuario.telefone;
+  const hasAddress = dadosUsuario && dadosUsuario.nome && dadosUsuario.rua && dadosUsuario.numero && dadosUsuario.bairro && dadosUsuario.telefone;
 
   const finalizarPedido = async () => {
-    // (Lógica de finalizar pedido - sem mudanças)
     if (!carrinho.length) {
-      showToast("Seu carrinho está vazio!");
+      showToast("Seu carrinho está vazio!", 'error');
       return;
     }
     if (!formaPagamento) {
-      showToast("Por favor, informe a forma de pagamento.");
+      showToast("Por favor, informe a forma de pagamento.", 'error');
       return;
     }
-    if (!hasAddress) {
-      showToast("Complete suas informações antes de fazer pedidos.");
+    if (!hasAddress) { 
+      showToast("Complete suas informações antes de fazer pedidos.", 'error');
       setMostrarConta(true);
       return;
     }
+
     const idPedido = gerarIdPedido();
+    const codigoSeguranca = Math.floor(1000 + Math.random() * 9000).toString();
+    
     try {
       await addDoc(collection(db, "pedidos"), {
         idPedido,
         usuario: usuario.email,
         userId: usuario.uid,
+        enderecoEntrega: {
+          nome: dadosUsuario.nome,
+          rua: dadosUsuario.rua,
+          numero: dadosUsuario.numero,
+          bairro: dadosUsuario.bairro,
+          referencia: dadosUsuario.referencia || "",
+          telefone: dadosUsuario.telefone
+        },
         itens: carrinho, 
         formaPagamento,
         status: "Em Preparo",
         data: new Date().toISOString(),
         total: totalComFrete,
+        codigoSeguranca: codigoSeguranca
       });
+
       setCarrinho([]);
       setFormaPagamento("");
       setPedidoFinalizado(true);
-      showToast(`Pedido #${idPedido} criado com sucesso!`);
+      showToast(`Pedido #${idPedido} criado com sucesso!`); 
+
     } catch (err) {
-      showToast("Erro ao salvar pedido: " + err.message);
+      console.error(err);
+      showToast("Erro ao salvar pedido: " + err.message, 'error'); 
     }
   };
 
   const fecharMensagem = () => setPedidoFinalizado(false);
 
-  if (!usuario) return <Login />;
+  const categorias = ["Todos", "Cervejas", "Destilados", "Energéticos", "Refrigerantes", "Ice", "Petiscos", "Tabacaria", "Sem Álcool"];
+  
+  const produtosFiltrados = produtos.filter((produto) => {
+    const matchCategoria = categoriaSelecionada === "Todos" || produto.categoria === categoriaSelecionada;
+    const matchBusca = produto.nome.toLowerCase().includes(termoBusca.toLowerCase());
+    return matchCategoria && matchBusca;
+  });
+
+  if (!usuario) return <Login showToast={showToast} />;
 
   return (
     <div className="container">
       <div className="painel">
-        {/* Header e Top-Bar (sem mudanças) */}
         <div className="header-logo">
           <img src="/LogoAdega.png" alt="Logo Adega Skynão" />
           <div>
-            <h1>Adega Skynão 🍾</h1>
+            <h1>Adega Skynão</h1>
             <p className="slogan">Rapidez e qualidade na sua festa!</p>
           </div>
         </div>
         <div className="top-bar">
           <div className="top-bar-buttons">
-            {isDono && (
-              <button
-                onClick={() => {
-                  setMostrarDashboard(true);
-                  setMostrarPainel(false);
-                  setMostrarCatalogo(false);
-                  setMostrarCarrinho(false);
-                  setProdutoSelecionado(null);
-                }}
-                className="botao"
-              >
-                Dashboard
-              </button>
+            {!isEntregador && (
+              <>
+                {isDono && (
+                  <button onClick={() => { resetarNavegacao(); setMostrarDashboard(true); }} className="botao">
+                    Dashboard
+                  </button>
+                )}
+                <button onClick={mostrarMenuPedidos} className="botao">
+                  Menu de Pedidos
+                </button>
+                <button onClick={voltarAoCatalogo} className="botao">
+                  Catálogo
+                </button>
+                <button onClick={mostrarPaginaCarrinho} className="botao">
+                  Carrinho
+                  {totalItensBadge > 0 && (
+                    <span className="badge-carrinho">{totalItensBadge}</span> 
+                  )}
+                </button>
+              </>
             )}
-            <button onClick={mostrarMenuPedidos} className="botao">
-              Menu de Pedidos
-            </button>
-            <button onClick={voltarAoCatalogo} className="botao">
-              Catálogo
-            </button>
-            
-            {/* BOTÃO CARRINHO CORRIGIDO */}
-            <button onClick={mostrarPaginaCarrinho} className="botao">
-              Carrinho
-              {totalItensBadge > 0 && (
-                // Correção: usar totalItensBadge aqui
-                <span className="badge-carrinho">{totalItensBadge}</span> 
-              )}
-            </button>
-            {/* FIM DA CORREÇÃO */}
-
           </div>
           <div className="top-bar-actions">
-            <button
-              onClick={() => signOut(auth)}
-              className="botao botao-vermelho"
-            >
-              Sair
-            </button>
-            <div
-              onClick={() => setMostrarConta((f) => !f)}
-              className="icon-perfil"
-            >
+            <button onClick={() => signOut(auth)} className="botao botao-vermelho">Sair</button>
+            {/* O ícone agora aparece para todos */}
+            <div onClick={() => {resetarNavegacao(); setMostrarConta(true);}} className="icon-perfil">
               <FaUserCircle />
             </div>
           </div>
         </div>
 
-        {/* UserInfo (sem mudanças) */}
+        {/* O bloqueio do !isEntregador foi removido daqui */}
         {mostrarConta && (
           <UserInfo 
             usuario={usuario} 
-            fechar={() => {
-              setMostrarConta(false);
+            fechar={() => { 
+              setMostrarConta(false); 
               fetchUserData(usuario.uid); 
-            }} 
+              // Direciona para a tela correta ao fechar
+              if (isEntregador) {
+                setMostrarPerfilEntregador(true);
+              } else if (isDono) {
+                setMostrarPainel(true);
+              } else {
+                setMostrarCatalogo(true);
+              }
+            }}
+            showToast={showToast}
           />
         )}
 
-        {/* Lógica de exibição principal */}
-        {produtoSelecionado ? (
+        {mostrarCombos && !isEntregador ? (
+          <CombosPage 
+            onVoltar={voltarAoCatalogo} 
+            adicionarComboAoCarrinho={adicionarComboAoCarrinho}
+          />
+        ) : produtoSelecionado && !isEntregador ? (
           <ProductDetailPage
             produto={produtoSelecionado}
             onVoltar={voltarAoCatalogo} 
             onAdicionarAoCarrinho={adicionarAoCarrinho}
           />
-        ) : mostrarDashboard ? (
-          <Dashboard fechar={() => setMostrarDashboard(false)} />
-        ) : mostrarPainel ? (
+        ) : mostrarDashboard && isDono ? (
+          <Dashboard fechar={() => {resetarNavegacao(); setMostrarPainel(true);}} />
+        ) : mostrarPerfilEntregador ? (
+          <PerfilEntregador showToast={showToast} dadosUsuario={dadosUsuario} />
+        ) : mostrarPainel && !isEntregador ? (
           <MenuPedidos isDono={isDono} usuario={usuario} />
-        ) : mostrarCarrinho ? (
+        ) : mostrarCarrinho && !isEntregador ? (
           <CartPage
             carrinho={carrinho}
             removerDoCarrinho={removerDoCarrinho} 
@@ -297,41 +379,108 @@ function App() {
             finalizarPedido={finalizarPedido}
             adicionarAoCarrinho={adicionarAoCarrinho} 
             hasAddress={hasAddress}
-            abrirPaginaConta={() => setMostrarConta(true)}
+            abrirPaginaConta={() => {resetarNavegacao(); setMostrarConta(true);}}
+            calcularTotalItem={calcularTotalItem} 
           />
-        ) : mostrarCatalogo ? (
+        ) : mostrarCatalogo && !isEntregador ? (
           <>
-            <Banner />
-          
-            <h2>Catálogo de Produtos</h2>
-            <div className="produtos">
-              {produtos.map((p) => (
-                <div 
-                  key={p.id} 
-                  className="cartao cartao-produto" 
-                  onClick={() => mostrarDetalhesProduto(p)} 
-                >
-                  <img src={p.imagem} alt={p.nome} className="imagem-produto" />
-                  <h2>{p.nome}</h2>
-                  <p>R$ {p.preco.toFixed(2)}</p>
+            <Banner onBannerClick={mostrarPaginaCombos} />
+            <h2 className="titulo-principal">Catálogo de Produtos</h2>
+
+            <div style={{ marginBottom: '20px', padding: '0 10px' }}>
+              <div style={{ position: 'relative', marginBottom: '15px' }}>
+                <FaSearch style={{ position: 'absolute', left: '10px', top: '12px', color: '#00ff66' }} />
+                
+                <input 
+                  type="text" 
+                  placeholder="O que você procura hoje?" 
+                  value={termoBusca}
+                  onChange={(e) => setTermoBusca(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 10px 10px 35px',
+                    borderRadius: '20px',
+                    border: '1px solid #00ff66',
+                    backgroundColor: '#222',
+                    color: '#fff',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
+                {categorias.map(cat => (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation(); 
-                      adicionarAoCarrinho(p);
-                    }}
+                    key={cat}
+                    onClick={() => setCategoriaSelecionada(cat)}
                     className="botao"
-                    disabled={p.estoque === 0}
+                    style={{
+                      whiteSpace: 'nowrap',
+                      backgroundColor: categoriaSelecionada === cat ? '#00ff66' : '#222',
+                      color: categoriaSelecionada === cat ? '#000' : '#fff',
+                      border: '1px solid #00ff66',
+                      padding: '8px 15px',
+                      borderRadius: '15px',
+                      fontSize: '0.9rem'
+                    }}
                   >
-                    {p.estoque === 0 ? "Esgotado" : "Adicionar ao Carrinho"}
+                    {cat}
                   </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="produtos">
+              {produtosFiltrados.length > 0 ? (
+                produtosFiltrados.map((p) => (
+                  <div 
+                    key={p.id} 
+                    className="cartao cartao-produto" 
+                    onClick={() => mostrarDetalhesProduto(p)} 
+                  >
+                    <img src={p.imagem} alt={p.nome} className="imagem-produto" />
+                    <h2>{p.nome}</h2>
+                    <p>R$ {p.preco.toFixed(2)}</p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); 
+                        adicionarAoCarrinho(p);
+                      }}
+                      className="botao"
+                      disabled={p.estoque === 0}
+                    >
+                      {p.estoque === 0 ? "Esgotado" : "Adicionar ao Carrinho"}
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', width: '100%', padding: '40px' }}>
+                  {categoriaSelecionada === "Tabacaria" ? (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '15px' 
+                    }}>
+                      <FaClock style={{ fontSize: '3rem', color: '#00ff66' }} />
+                      <div>
+                        <h3 style={{ color: '#00ff66', fontSize: '1.5rem', margin: '0 0 10px 0' }}>Em breve novidades!</h3>
+                        <p style={{ color: '#ccc', fontSize: '1rem', margin: 0 }}>Estamos preparando uma seleção especial para esta seção.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '1.2rem', color: '#888' }}>
+                      Nenhum produto encontrado. 😢
+                    </p>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
           </>
         ) : null}
 
-        {/* (Resto do código sem mudanças) */}
-        {pedidoFinalizado && (
+        {pedidoFinalizado && !isEntregador && (
           <div className="cartao">
             <h2 className="titulo-principal">🎉 Pedido Criado!</h2>
             <p>Confira no Menu de Pedidos.</p>
@@ -340,7 +489,8 @@ function App() {
             </button>
           </div>
         )}
-        {toastMessage && <Toast message={toastMessage} onClose={fecharToast} />}
+
+        {toast && <Toast toast={toast} onClose={fecharToast} />}
       </div>
 
       <Footer />

@@ -1,7 +1,5 @@
 import React from "react";
 
-// (Usaremos o estilo.css para este componente)
-
 function Footer() {
   return (
     <footer className="footer-container">

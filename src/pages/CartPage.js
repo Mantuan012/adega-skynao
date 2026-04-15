@@ -1,6 +1,6 @@
 import React from "react";
+import { FaMoneyBillWave, FaTag } from 'react-icons/fa'; 
 
-// --- MUDANÇA 1: Receber as novas props: hasAddress e abrirPaginaConta ---
 function CartPage({
   carrinho,
   removerDoCarrinho,
@@ -13,6 +13,7 @@ function CartPage({
   finalizarPedido,
   hasAddress,
   abrirPaginaConta,
+  calcularTotalItem // Recebendo a função do App.js
 }) {
 
   if (carrinho.length === 0) {
@@ -28,34 +29,49 @@ function CartPage({
     <div className="cartao">
       <h2 className="titulo-principal">🛒 Carrinho</h2>
       <ul className="lista-carrinho">
-        {carrinho.map((item) => (
-          <li key={item.id}>
-            <span>
-              {item.nome} (R$ {item.preco.toFixed(2)} cada)
-            </span>
-            <div className="controles-quantidade">
-              <button
-                onClick={() => removerDoCarrinho(item.id)}
-                className="botao-quantidade"
-              >
-                -
-              </button>
-              <span className="quantidade">{item.quantidade}</span>
-              <button
-                onClick={() => adicionarAoCarrinho(item)}
-                className="botao-quantidade"
-              >
-                +
-              </button>
-            </div>
-            <span className="subtotal-item">
-              R$ {(item.preco * item.quantidade).toFixed(2)}
-            </span>
-          </li>
-        ))}
+        {carrinho.map((item) => {
+          // Usa a função inteligente para calcular o total do item
+          const subtotal = calcularTotalItem(item);
+          // Verifica se está aplicando preço de fardo
+          const isFardoAplicado = item.fardo && item.quantidade >= item.fardo.quantidade;
+
+          return (
+            <li key={item.id}>
+              <div style={{display: 'flex', flexDirection: 'column'}}>
+                <span>
+                  {item.nome}
+                </span>
+                {/* Mostra aviso se atingiu quantidade de fardo */}
+                {isFardoAplicado && (
+                  <span style={{fontSize: '0.8rem', color: '#FFD700', display: 'flex', alignItems: 'center', gap: '5px'}}>
+                    <FaTag size={10} /> Preço de Fardo Ativado!
+                  </span>
+                )}
+              </div>
+              
+              <div className="controles-quantidade">
+                <button
+                  onClick={() => removerDoCarrinho(item.id)}
+                  className="botao-quantidade"
+                >
+                  -
+                </button>
+                <span className="quantidade">{item.quantidade}</span>
+                <button
+                  onClick={() => adicionarAoCarrinho(item)}
+                  className="botao-quantidade"
+                >
+                  +
+                </button>
+              </div>
+              <span className="subtotal-item">
+                R$ {subtotal.toFixed(2)}
+              </span>
+            </li>
+          );
+        })}
       </ul>
 
-      {/* Totais (sem mudanças) */}
       <p style={{ fontWeight: "bold", marginTop: "10px", color: "#00ff66" }}>
         🧾 Subtotal: R$ {totalCarrinho.toFixed(2)}
       </p>
@@ -66,11 +82,8 @@ function CartPage({
         💰 Total: R$ {totalComFrete.toFixed(2)}
       </p>
 
-      {/* --- MUDANÇA 2: Etapa de Endereço/Pagamento (RNF01.1 e RF06) --- */}
-      {/* Verifica se o usuário tem endereço preenchido  */}
       {hasAddress ? (
         <>
-          {/* 1. Se tem endereço, mostra o formulário de pagamento */}
           <label htmlFor="formaPagamento" style={{ fontWeight: "bold", marginTop: '20px' }}>
             Forma de Pagamento:
           </label>
@@ -96,6 +109,11 @@ function CartPage({
             <option value="Cartão">Cartão</option>
           </select>
 
+          <div className="aviso-pagamento">
+            <FaMoneyBillWave className="aviso-pagamento-icone" />
+            <p>O pagamento será efetuado no momento da entrega, diretamente ao entregador.</p>
+          </div>
+
           <button
             onClick={finalizarPedido}
             className="botao"
@@ -106,7 +124,6 @@ function CartPage({
         </>
       ) : (
         <>
-          {/* 2. Se NÃO tem endereço, mostra o aviso (Etapa 2: Endereço)  */}
           <div 
             style={{ 
               border: '1px solid var(--cor-vermelho-hover)', 
@@ -131,8 +148,6 @@ function CartPage({
           </div>
         </>
       )}
-      {/* --- FIM DA MUDANÇA 2 --- */}
-
     </div>
   );
 }

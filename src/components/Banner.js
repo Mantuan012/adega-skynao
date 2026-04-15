@@ -1,9 +1,8 @@
 import React from "react";
-// Não precisamos mais de ícones aqui
 
-function Banner() {
+function Banner({ onBannerClick }) {
   return (
-    <div className="banner-container">
+    <div className="banner-container" onClick={onBannerClick}>
       {/* Bloco de texto da Esquerda */}
       <div className="banner-texto-esquerda">
         <h2>PROMOÇÕES</h2>
