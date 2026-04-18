@@ -4,16 +4,16 @@ import { db } from '../firebase/firebaseConfig';
 
 const MenuPedidos = ({ isDono, usuario }) => {
   const [pedidos, setPedidos] = useState([]);
-  const [filtroStatus, setFiltroStatus] = useState('Todos');
+  const [filtroStatus, setFiltroStatus] = useState('Pendentes');
 
   useEffect(() => {
     if (!usuario) return;
 
     let q;
     if (isDono) {
-      q = query(collection(db, "pedidos")); // O Admin puxa todos
+      q = query(collection(db, "pedidos")); 
     } else {
-      q = query(collection(db, "pedidos"), where("userId", "==", usuario.uid)); // Cliente puxa apenas os dele
+      q = query(collection(db, "pedidos"), where("userId", "==", usuario.uid)); 
     }
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -21,7 +21,6 @@ const MenuPedidos = ({ isDono, usuario }) => {
       querySnapshot.forEach((documento) => {
         pedidosData.push({ id: documento.id, ...documento.data() });
       });
-      // Ordena por data (mais recente primeiro)
       pedidosData.sort((a, b) => new Date(b.data) - new Date(a.data));
       setPedidos(pedidosData);
     });
@@ -47,13 +46,15 @@ const MenuPedidos = ({ isDono, usuario }) => {
     }
   };
 
-  const pedidosFiltrados = filtroStatus === 'Todos' 
-    ? pedidos 
-    : pedidos.filter(p => p.status === filtroStatus);
+  const pedidosFiltrados = pedidos.filter(p => {
+    if (filtroStatus === 'Todos') return true;
+    if (filtroStatus === 'Pendentes') return p.status !== 'Entregue';
+    return p.status === filtroStatus;
+  });
 
   return (
     <div style={{ border: 'none', backgroundColor: 'transparent', padding: 0 }}>
-      <h2 className="titulo-principal">🧾 Menu de Pedidos</h2>
+      <h2 className="titulo-principal">Menu de Pedidos</h2>
 
       <div style={{ marginBottom: '20px' }}>
         <label style={{ color: '#00ff66', marginRight: '10px', fontWeight: 'bold' }}>Filtrar por Status:</label>
@@ -70,17 +71,17 @@ const MenuPedidos = ({ isDono, usuario }) => {
             cursor: 'pointer'
           }}
         >
-          <option value="Todos">Todos</option>
+          <option value="Pendentes">Apenas Pendentes</option>
+          <option value="Todos">Mostrar Todos</option>
           <option value="Em Preparo">Em Preparo</option>
           <option value="Saiu para Entrega">Saiu para Entrega</option>
           <option value="Entregue">Entregue</option>
-          <option value="Com Problema">Com Problema</option>
         </select>
       </div>
 
       {pedidosFiltrados.length === 0 ? (
         <div className="cartao" style={{ textAlign: 'center', padding: '40px' }}>
-          <p style={{ color: '#888', fontSize: '1.2rem', margin: 0 }}>Nenhum pedido encontrado. 😢</p>
+          <p style={{ color: '#888', fontSize: '1.2rem', margin: 0 }}>Nenhum pedido encontrado nesta categoria.</p>
         </div>
       ) : (
         pedidosFiltrados.map((pedido) => (
@@ -91,7 +92,7 @@ const MenuPedidos = ({ isDono, usuario }) => {
             <p>
               <b>Status:</b>{' '}
               <span style={{ 
-                color: pedido.status === 'Entregue' ? '#00cc44' : pedido.status === 'Com Problema' ? '#ff3333' : '#fff',
+                color: pedido.status === 'Entregue' ? '#00cc44' : '#fff',
                 fontWeight: 'bold' 
               }}>
                 {pedido.status}
@@ -101,7 +102,7 @@ const MenuPedidos = ({ isDono, usuario }) => {
             <p><b>Forma de Pagamento:</b> {pedido.formaPagamento}</p>
             <p><b>Data:</b> {new Date(pedido.data).toLocaleString()}</p>
             
-            <div style={{ backgroundColor: '#1a1a1a', padding: '15px', borderRadius: '8px', marginTop: '15px', borderLeft: '3px solid #ff3333' }}>
+            <div style={{ backgroundColor: '#1a1a1a', padding: '15px', borderRadius: '8px', marginTop: '15px', borderLeft: '3px solid #00ff66' }}>
               <p style={{ color: '#00ff66', marginBottom: '8px', fontWeight: 'bold' }}>📍 Dados de Entrega</p>
               <p><b>Cliente:</b> {pedido.enderecoEntrega?.nome}</p>
               <p><b>Endereço:</b> {pedido.enderecoEntrega?.rua}, {pedido.enderecoEntrega?.numero} - {pedido.enderecoEntrega?.bairro}</p>
@@ -112,7 +113,6 @@ const MenuPedidos = ({ isDono, usuario }) => {
               Total: R$ {pedido.total?.toFixed(2)}
             </h3>
 
-            {/* CÓDIGO DE SEGURANÇA: Só aparece para o Cliente (não dono), e apenas antes de ser entregue */}
             {!isDono && pedido.codigoSeguranca && pedido.status !== 'Entregue' && (
               <div style={{ backgroundColor: '#111', border: '1px dashed #00ff66', padding: '15px', borderRadius: '8px', marginTop: '20px', textAlign: 'center' }}>
                 <p style={{ color: '#00ff66', fontWeight: 'bold', marginBottom: '5px' }}>🔐 Seu Código de Segurança</p>
@@ -121,7 +121,6 @@ const MenuPedidos = ({ isDono, usuario }) => {
               </div>
             )}
 
-            {/* BOTÕES DO ADMIN: Controle completo de fluxo */}
             {isDono && (
               <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
                 {pedido.status === 'Em Preparo' && (
@@ -133,22 +132,16 @@ const MenuPedidos = ({ isDono, usuario }) => {
                 {pedido.status === 'Saiu para Entrega' && (
                   <>
                     <button onClick={() => atualizarStatus(pedido.id, 'Em Preparo')} className="botao botao-vermelho">
-                      🔙 Voltar para Preparo
+                      Voltar para Preparo
                     </button>
                     <button onClick={() => atualizarStatus(pedido.id, 'Entregue')} className="botao">
-                      ✔️ Forçar Conclusão
+                      Forçar Conclusão
                     </button>
                   </>
                 )}
 
-                {pedido.status === 'Com Problema' && (
-                  <button onClick={() => atualizarStatus(pedido.id, 'Em Preparo')} className="botao">
-                    🔄 Retomar Pedido
-                  </button>
-                )}
-
                 <button onClick={() => excluirPedido(pedido.id)} className="botao botao-vermelho" style={{ marginLeft: 'auto' }}>
-                  🗑️ Excluir
+                  Excluir
                 </button>
               </div>
             )}

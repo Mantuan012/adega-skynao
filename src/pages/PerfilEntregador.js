@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FaStar, FaMapMarkerAlt, FaShieldAlt, FaUserCircle } from 'react-icons/fa';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig'; 
+import { db } from '../firebase/firebaseConfig';
+import './PerfilEntregador.css';
 
 const PerfilEntregador = ({ showToast, dadosUsuario }) => {
   const [pedidoAtual, setPedidoAtual] = useState(null);
@@ -12,11 +13,16 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       if (!querySnapshot.empty) {
-        const docData = querySnapshot.docs[0];
-        setPedidoAtual({
-          docId: docData.id, 
-          ...docData.data()
+        const listaPendentes = [];
+        querySnapshot.forEach((docData) => {
+          listaPendentes.push({
+            docId: docData.id, 
+            ...docData.data()
+          });
         });
+
+        listaPendentes.sort((a, b) => new Date(a.data) - new Date(b.data));
+        setPedidoAtual(listaPendentes[0]);
       } else {
         setPedidoAtual(null); 
       }
@@ -26,8 +32,6 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
   }, []);
 
   const handleValidarEntrega = async () => {
-    // BLINDAGEM DE ERRO: Força a conversão de ambos para String e remove espaços vazios.
-    // Assim, se o banco trouxer um número (3442) e o input for texto ("3442"), eles vão ser iguais.
     const codigoCorreto = pedidoAtual.codigoSeguranca ? String(pedidoAtual.codigoSeguranca).trim() : "1234";
     const codigoDigitado = String(codigoValidacao).trim();
 
@@ -36,24 +40,13 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
         await updateDoc(doc(db, "pedidos", pedidoAtual.docId), {
           status: "Entregue"
         });
-        showToast('✅ Sucesso: Pedido finalizado e entregue!', 'success');
+        showToast('Sucesso: Pedido finalizado e entregue!', 'success');
         setCodigoValidacao('');
       } catch (error) {
-        showToast('❌ Erro de conexão com o banco de dados.', 'error');
+        showToast('Erro de conexão com o banco de dados.', 'error');
       }
     } else {
-      showToast('❌ Erro: Código de segurança inválido.', 'error');
-    }
-  };
-
-  const handleReportarProblema = async () => {
-    try {
-      await updateDoc(doc(db, "pedidos", pedidoAtual.docId), {
-        status: "Com Problema"
-      });
-      showToast('⚠️ Problema reportado! O status do pedido foi atualizado.', 'error');
-    } catch (error) {
-      showToast('❌ Erro ao reportar problema no sistema.', 'error');
+      showToast('Erro: Código de segurança inválido.', 'error');
     }
   };
 
@@ -103,17 +96,18 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
           </div>
 
           <div className="botoes-acao-entregador">
-            <button className="botao botao-sucesso" onClick={handleValidarEntrega}>
+            <button 
+              className="botao botao-sucesso" 
+              onClick={handleValidarEntrega}
+              style={{ width: '100%' }}
+            >
               Confirmar Entrega
-            </button>
-            <button className="botao botao-vermelho" onClick={handleReportarProblema}>
-              Reportar Problema
             </button>
           </div>
         </div>
       ) : (
         <p style={{ textAlign: 'center', marginTop: '30px', fontSize: '1.2rem' }}>
-          Nenhuma entrega pendente no momento. 🚀
+          Nenhuma entrega pendente no momento.
         </p>
       )}
     </div>

@@ -1,0 +1,22 @@
+.gestao-container { margin-top: 40px; }
+.gestao-header { color: #00ff66; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+.gestao-descricao { color: #ccc; font-size: 0.9rem; margin-bottom: 20px; }
+.input-busca-container { position: relative; margin-bottom: 20px; }
+.input-busca-icone { position: absolute; left: 15px; top: 12px; color: #00ff66; }
+.input-busca { width: 100%; padding: 10px 10px 10px 45px; border-radius: 20px; border: 1px solid #00ff66; background-color: #222; color: #fff; outline: none; box-sizing: border-box; }
+.loading-text { text-align: center; color: #888; }
+.tabela-container { overflow-x: auto; }
+.tabela-usuarios { width: 100%; border-collapse: collapse; color: #fff; text-align: left; }
+.tabela-usuarios th { padding: 12px; border-bottom: 2px solid #00ff66; font-size: 0.9rem; }
+.tabela-usuarios td { padding: 12px; border-bottom: 1px solid #333; }
+.td-nome { font-weight: bold; color: #00ff66; }
+.td-email { font-size: 0.8rem; color: #aaa; }
+.tag-admin { color: #ff4444; display: flex; align-items: center; gap: 5px; }
+.tag-entregador { color: #00ff66; display: flex; align-items: center; gap: 5px; }
+.tag-cliente { color: #aaa; display: flex; align-items: center; gap: 5px; }
+.td-acoes { display: flex; gap: 8px; }
+.btn-admin { background-color: #ff4444; border: none; padding: 5px 10px; font-size: 0.75rem; background-image: none; }
+.btn-entregador { padding: 5px 10px; font-size: 0.75rem; }
+.btn-rebaixar { padding: 5px 10px; font-size: 0.75rem; }
+.btn-ver-todos-container { text-align: center; margin-top: 15px; }
+.btn-ver-todos { background: transparent; color: #00ff66; border: 1px solid #00ff66; padding: 8px 15px; border-radius: 15px; cursor: pointer; }

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-// Importa os ícones de sucesso e erro
+import './Toast.css';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 export default function Toast({ toast, onClose }) {

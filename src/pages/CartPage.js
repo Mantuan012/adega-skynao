@@ -1,25 +1,15 @@
 import React from "react";
-import { FaMoneyBillWave, FaTag } from 'react-icons/fa'; 
+import './CartPage.css';
+import { FaMoneyBillWave, FaTag } from 'react-icons/fa';
 
 function CartPage({
-  carrinho,
-  removerDoCarrinho,
-  adicionarAoCarrinho,
-  totalCarrinho,
-  freteCalculado,
-  totalComFrete,
-  formaPagamento,
-  setFormaPagamento,
-  finalizarPedido,
-  hasAddress,
-  abrirPaginaConta,
-  calcularTotalItem // Recebendo a função do App.js
+  carrinho, removerDoCarrinho, adicionarAoCarrinho, totalCarrinho, freteCalculado, totalComFrete, formaPagamento, setFormaPagamento, finalizarPedido, hasAddress, abrirPaginaConta, calcularTotalItem // Recebendo a função do App.js
 }) {
 
   if (carrinho.length === 0) {
     return (
       <div className="cartao">
-        <h2 className="titulo-principal">🛒 Carrinho</h2>
+        <h2 className="titulo-principal">Carrinho</h2>
         <p>Seu carrinho está vazio.</p>
       </div>
     );
@@ -27,7 +17,7 @@ function CartPage({
 
   return (
     <div className="cartao">
-      <h2 className="titulo-principal">🛒 Carrinho</h2>
+      <h2 className="titulo-principal">Carrinho</h2>
       <ul className="lista-carrinho">
         {carrinho.map((item) => {
           // Usa a função inteligente para calcular o total do item
@@ -44,7 +34,7 @@ function CartPage({
                 {/* Mostra aviso se atingiu quantidade de fardo */}
                 {isFardoAplicado && (
                   <span style={{fontSize: '0.8rem', color: '#FFD700', display: 'flex', alignItems: 'center', gap: '5px'}}>
-                    <FaTag size={10} /> Preço de Fardo Ativado!
+                    <FaTag size={10} /> Preço de Fardo Ativado
                   </span>
                 )}
               </div>
@@ -73,18 +63,18 @@ function CartPage({
       </ul>
 
       <p style={{ fontWeight: "bold", marginTop: "10px", color: "#00ff66" }}>
-        🧾 Subtotal: R$ {totalCarrinho.toFixed(2)}
+        Subtotal: R$ {totalCarrinho.toFixed(2)}
       </p>
       <p style={{ fontWeight: "bold", color: "#00ff66" }}>
-        🚚 Frete: R$ {freteCalculado.toFixed(2)}
+        Frete: R$ {freteCalculado.toFixed(2)}
       </p>
       <p style={{ fontWeight: "bold", fontSize: "1.1rem", color: "#00ff66" }}>
-        💰 Total: R$ {totalComFrete.toFixed(2)}
+        Total: R$ {totalComFrete.toFixed(2)}
       </p>
 
       {hasAddress ? (
         <>
-          <label htmlFor="formaPagamento" style={{ fontWeight: "bold", marginTop: '20px' }}>
+          <label htmlFor="formaPagamento" style={{ fontWeight: "bold", marginTop: '20px', display: 'block' }}>
             Forma de Pagamento:
           </label>
           <select
@@ -117,9 +107,9 @@ function CartPage({
           <button
             onClick={finalizarPedido}
             className="botao"
-            style={{ marginTop: "12px" }}
+            style={{ marginTop: "12px", width: "100%" }}
           >
-            ✅ Finalizar Pedido
+            Finalizar Pedido
           </button>
         </>
       ) : (
@@ -133,7 +123,7 @@ function CartPage({
               backgroundColor: 'rgba(204, 0, 0, 0.1)'
             }}
           >
-            <h3 style={{ margin: '0 0 10px 0', color: '#ff6666' }}>⚠️ Endereço Incompleto</h3>
+            <h3 style={{ margin: '0 0 10px 0', color: '#ff6666' }}>Endereço Incompleto</h3>
             <p style={{ margin: 0, color: '#e0e0e0' }}>
               Você precisa preencher seus dados (nome, endereço, telefone) no seu perfil 
               para poder finalizar o pedido.

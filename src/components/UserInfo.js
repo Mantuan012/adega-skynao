@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { db, auth } from "../firebase/firebaseConfig"; 
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import './UserInfo.css';
 
 // --- MUDANÇA 1: Recebendo 'showToast' nas props ---
 export default function UserInfo({ fechar, showToast }) { 

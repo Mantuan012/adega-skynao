@@ -1,0 +1,12 @@
+/* src/pages/CartPage.css */
+.lista-carrinho { list-style: none; padding-left: 0; }
+.lista-carrinho li { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333; flex-wrap: wrap; gap: 10px; }
+.lista-carrinho li > span:first-child { font-weight: 600; flex-grow: 1; }
+.controles-quantidade { display: flex; align-items: center; gap: 10px; justify-content: center; }
+.botao-quantidade { background-color: var(--cor-primaria-final); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.3rem; font-weight: bold; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+.botao-quantidade:hover { background-color: var(--cor-primaria-hover); }
+.quantidade { font-size: 1.1rem; font-weight: bold; min-width: 20px; text-align: center; }
+.subtotal-item { font-weight: bold; color: #00ff66; font-size: 1.1rem; min-width: 80px; text-align: right; }
+.aviso-pagamento { display: flex; align-items: center; gap: 12px; background-color: rgba(0, 122, 51, 0.15); border: 1px solid var(--cor-primaria-final); border-radius: var(--radius-padrao); padding: 12px 15px; margin-top: 20px; }
+.aviso-pagamento-icone { color: var(--cor-primaria-hover); font-size: 1.5rem; flex-shrink: 0; }
+.aviso-pagamento p { color: #a0ffa0; margin: 0; font-size: 0.95rem; line-height: 1.4; }

@@ -45,7 +45,7 @@ function ProductDetailPage({ produto, onVoltar, onAdicionarAoCarrinho }) {
             R$ {produto.preco.toFixed(2)}
           </p>
 
-          {/* --- AVISO DE FARDO (Se houver) --- */}
+          {/* --- AVISO DE FARDO --- */}
           {produto.fardo && (
             <div style={{
               backgroundColor: '#FFD700',
@@ -56,7 +56,7 @@ function ProductDetailPage({ produto, onVoltar, onAdicionarAoCarrinho }) {
               marginBottom: '15px',
               display: 'inline-block'
             }}>
-              🔥 LEVE O FARDO ({produto.fardo.quantidade} UN) POR R$ {produto.fardo.preco.toFixed(2)}!
+              LEVE O FARDO ({produto.fardo.quantidade} UN) POR R$ {produto.fardo.preco.toFixed(2)}
             </div>
           )}
           {/* ---------------------- */}
