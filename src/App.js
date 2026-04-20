@@ -12,7 +12,8 @@ import Footer from "./components/Footer";
 import NavBar from "./components/NavBar"; 
 import { auth, db } from "./firebase/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, getDoc, doc } from "firebase/firestore";
+// IMPORTANTE: Adicionamos o runTransaction aqui para o controle de concorrência
+import { collection, getDoc, doc, runTransaction } from "firebase/firestore";
 import Toast from "./components/Toast";
 import { produtos } from './data/Produtos.js'; 
 
@@ -205,6 +206,7 @@ function App() {
   const totalComFrete = totalCarrinho + freteFinal;
   const hasAddress = dadosUsuario && dadosUsuario.nome && dadosUsuario.rua && dadosUsuario.numero && dadosUsuario.bairro && dadosUsuario.telefone;
 
+  // --- NOVA FUNÇÃO DE CHECKOUT COM TRANSAÇÃO ATÔMICA ---
   const finalizarPedido = async () => {
     if (!carrinho.length) {
       showToast("Seu carrinho está vazio!", 'error');
@@ -224,35 +226,73 @@ function App() {
     const codigoSeguranca = Math.floor(1000 + Math.random() * 9000).toString();
     
     try {
-      await addDoc(collection(db, "pedidos"), {
-        idPedido,
-        usuario: usuario.email,
-        userId: usuario.uid,
-        enderecoEntrega: {
-          nome: dadosUsuario.nome,
-          rua: dadosUsuario.rua,
-          numero: dadosUsuario.numero,
-          bairro: dadosUsuario.bairro,
-          referencia: dadosUsuario.referencia || "",
-          telefone: dadosUsuario.telefone
-        },
-        itens: carrinho, 
-        formaPagamento,
-        status: "Em Preparo",
-        data: new Date().toISOString(),
-        total: totalComFrete,
-        codigoSeguranca: codigoSeguranca
+      // Iniciando a Transação Segura do Firestore
+      await runTransaction(db, async (transaction) => {
+        // 1. Mapear as referências dos produtos no Firestore
+        const produtosRefs = carrinho.map(item => doc(db, "produtos", String(item.id)));
+        const produtosSnapshots = [];
+
+        // 2. Leitura obrigatória antes de qualquer escrita
+        for (let ref of produtosRefs) {
+          const snap = await transaction.get(ref);
+          produtosSnapshots.push(snap);
+        }
+
+        // 3. Validação de Estoque (Fallback Inteligente: apenas checa se o produto existir no BD)
+        carrinho.forEach((itemNoCarrinho, index) => {
+          const snap = produtosSnapshots[index];
+          if (snap.exists()) {
+            const dadosBanco = snap.data();
+            if (dadosBanco.estoque < itemNoCarrinho.quantidade) {
+              throw new Error(`Estoque insuficiente para: ${itemNoCarrinho.nome}. Restam apenas ${dadosBanco.estoque} unidades.`);
+            }
+          }
+        });
+
+        // 4. Escrita 1: Atualizar os estoques no banco (se existirem)
+        carrinho.forEach((itemNoCarrinho, index) => {
+          const snap = produtosSnapshots[index];
+          if (snap.exists()) {
+            const dadosBanco = snap.data();
+            const novoEstoque = dadosBanco.estoque - itemNoCarrinho.quantidade;
+            transaction.update(produtosRefs[index], { estoque: novoEstoque });
+          }
+        });
+
+        // 5. Escrita 2: Registrar o pedido de forma segura
+        const novoPedidoRef = doc(collection(db, "pedidos")); 
+        
+        transaction.set(novoPedidoRef, {
+          idPedido,
+          usuario: usuario.email,
+          userId: usuario.uid,
+          enderecoEntrega: {
+            nome: dadosUsuario.nome,
+            rua: dadosUsuario.rua,
+            numero: dadosUsuario.numero,
+            bairro: dadosUsuario.bairro,
+            referencia: dadosUsuario.referencia || "",
+            telefone: dadosUsuario.telefone
+          },
+          itens: carrinho, 
+          formaPagamento,
+          status: "Em Preparo",
+          data: new Date().toISOString(),
+          total: totalComFrete,
+          codigoSeguranca: codigoSeguranca
+        });
       });
 
+      // Se a transação passou direto por tudo sem dar erro:
       setCarrinho([]);
       setFormaPagamento("");
-      showToast(`Pedido #${idPedido} criado com sucesso!`); 
+      showToast(`Pedido #${idPedido} criado com segurança!`); 
 
       mostrarMenuPedidos();
 
     } catch (err) {
       console.error(err);
-      showToast("Erro ao salvar pedido: " + err.message, 'error'); 
+      showToast(err.message || "Erro de concorrência ao salvar pedido.", 'error'); 
     }
   };
 
