@@ -14,8 +14,14 @@ export default function Login({ showToast }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // --- NOVA FUNÇÃO: LOGIN COM GOOGLE ---
+  // --- FUNÇÃO BLINDADA: LOGIN COM GOOGLE ---
   const handleGoogleLogin = async () => {
+    // Força o Google a pedir a seleção da conta.
+    // Isso "acorda" o Safari e evita que ele bloqueie o pop-up achando que é spam
+    googleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
+
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -38,8 +44,15 @@ export default function Login({ showToast }) {
         showToast("Login com Google realizado com sucesso!");
       }
     } catch (error) {
+      console.error("Erro no pop-up do Google:", error);
+      
       if (error.code !== 'auth/popup-closed-by-user') {
-        showToast("Erro ao fazer login com Google.", 'error');
+        // Tratamento especial para o erro do iPhone/WhatsApp
+        if (error.code === 'auth/internal-error' || error.message.includes('missing initial state')) {
+           showToast("Bloqueio da Apple detectado! Tente abrir o site direto no navegador Safari.", 'error');
+        } else {
+           showToast("Erro ao fazer login com Google.", 'error');
+        }
       }
     }
   };
