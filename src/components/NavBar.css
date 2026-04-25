@@ -1,5 +1,3 @@
-/* src/components/NavBar.css */
-
 .header-logo {
   display: flex;
   align-items: center;
@@ -30,24 +28,89 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
-.top-bar-buttons,
-.top-bar-actions {
+.top-bar-buttons {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.icon-perfil {
-  font-size: 1.5rem;
-  color: var(--cor-primaria-final);
+/* CONTAINER DA ÁREA DE PERFIL */
+.top-bar-actions {
+  display: flex;
+  gap: 15px; 
+  align-items: center;
+  background: #111;
+  padding: 5px 15px 5px 5px;
+  border-radius: 30px;
+  border: 1px solid #333;
+}
+
+/* NOVO CHIP DE UTILIZADOR */
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
-  transition: color 0.2s;
+  padding: 4px 12px 4px 4px;
+  border-radius: 30px;
+  transition: background 0.2s ease;
 }
 
-.icon-perfil:hover {
-  color: var(--cor-primaria-hover);
+.user-chip:hover {
+  background: #222;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #00ff66;
+}
+
+.user-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #00ff66;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.user-name {
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+/* BOTÃO DE SAIR REDESENHADO (ANTI-MISSCLICK) */
+.botao-sair-clean {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #ff4444;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 20px;
+  transition: all 0.2s;
+}
+
+.botao-sair-clean:hover {
+  background: rgba(255, 68, 68, 0.1);
+  color: #ff6666;
 }
 
 .badge-carrinho {
@@ -65,4 +128,42 @@
 
 .badge-carrinho:hover {
   transform: scale(1.1);
+}
+
+/* MODAL DE SAÍDA CUSTOMIZADO*/
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.modal-sair-conteudo {
+  background-color: #111;
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid #ff4444;
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.2);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  animation: modalSairAnimacao 0.3s ease-out;
+}
+
+@keyframes modalSairAnimacao {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

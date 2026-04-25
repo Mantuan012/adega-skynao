@@ -150,7 +150,7 @@ export const produtos = [
     descricao: "A cerveja mexicana mais famosa do mundo. Leve, refrescante e perfeita com uma fatia de limão no gargalo. Sinta a praia onde estiver."
   },
 
-  // 300ml (Romarinho) - Fardo de 12
+  // 300ml - Fardo de 12
   { id: 14, nome: "Brahma 300ml", preco: 2.69, categoria: "Cervejas", volume: 0.5, estoque: 50, imagem: "/images/Brahma300ml.png", fardo: { quantidade: 12, preco: 30.00 }, descricao: "A famosa 'Romarinho'. Tamanho ideal para beber sempre gelada, do primeiro ao último gole." },
   { id: 15, nome: "Skol 300ml", preco: 2.69, categoria: "Cervejas", volume: 0.5, estoque: 50, imagem: "/images/Skol300ml.png", fardo: { quantidade: 12, preco: 30.00 }, descricao: "Skolzinha 300ml. A medida certa da refrescância para quem não gosta de cerveja esquentando no copo." },
   { id: 16, nome: "Antarctica 300ml", preco: 2.69, categoria: "Cervejas", volume: 0.5, estoque: 50, imagem: "/images/Antarctica300ml.png", fardo: { quantidade: 12, preco: 30.00 }, descricao: "Antarctica tradicional em garrafa compacta. Sabor suave e tradição de qualidade." },
