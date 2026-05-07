@@ -1,87 +1,120 @@
-import React from "react";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
+import { useCart } from '../contexts/CartContext';
+import { FaArrowLeft, FaCartPlus } from 'react-icons/fa';
 
-function ProductDetailPage({ produto, onVoltar, onAdicionarAoCarrinho }) {
+function ProductDetailPage() {
+  const { id } = useParams(); 
+  const navigate = useNavigate();
+  const { adicionarAoCarrinho } = useCart();
   
+  const [produto, setProduto] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const buscarProduto = async () => {
+      try {
+        const docRef = doc(db, "produtos", String(id));
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setProduto({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          setProduto(null); 
+        }
+      } catch (error) {
+        console.error("Erro ao buscar produto:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    buscarProduto();
+  }, [id]);
+
+  if (loading) {
+    return <div style={{ color: '#00ff66', textAlign: 'center', marginTop: '10%' }}>Carregando detalhes do produto...</div>;
+  }
+
   if (!produto) {
     return (
-      <div className="cartao">
-        <button onClick={onVoltar} className="botao botao-vermelho" style={{ marginBottom: '20px' }}>
-          &larr; Voltar
+      <div className="cartao" style={{ textAlign: 'center', padding: '40px', marginTop: '20px' }}>
+        <h2 style={{ color: '#ff4444' }}>Produto não encontrado</h2>
+        <p style={{ color: '#aaa' }}>Esta bebida pode ter sido removida do nosso catálogo.</p>
+        <button onClick={() => navigate('/catalogo')} className="botao botao-vermelho" style={{ marginTop: '20px' }}>
+          <FaArrowLeft /> Voltar ao Catálogo
         </button>
-        <h2 className="titulo-principal">Produto não encontrado</h2>
       </div>
     );
   }
 
-  const semEstoque = produto.estoque <= 0;
-
   return (
-    <div>
-      <button onClick={onVoltar} className="botao" style={{ marginBottom: '20px' }}>
-        &larr; Voltar ao Catálogo
+    <div className="cartao" style={{ marginTop: '20px', padding: '30px', position: 'relative' }}>
+      
+      {/* Botão Voltar no Canto */}
+      <button 
+        onClick={() => navigate('/catalogo')} 
+        className="botao" 
+        style={{ position: 'absolute', top: '20px', left: '20px', backgroundColor: '#222', border: '1px solid #444', color: '#fff', padding: '10px 15px' }}
+      >
+        <FaArrowLeft /> Voltar
       </button>
 
-      <div className="cartao" style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', justifyContent: 'center', alignItems: 'center', marginTop: '40px' }}>
         
-        <img 
-          src={produto.imagem} 
-          alt={produto.nome} 
-          style={{ 
-            width: '100%', 
-            maxWidth: '400px', 
-            height: 'auto', 
-            objectFit: 'cover', 
-            borderRadius: '8px', 
-            border: '1px solid #00ff66' 
-          }} 
-        />
-
-        <div style={{ flex: 1, minWidth: '300px' }}>
-          <h2 className="titulo-principal" style={{ textAlign: 'left', fontSize: '2.5rem' }}>
-            {produto.nome}
-          </h2>
-
-          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#fff', margin: '10px 0' }}>
-            R$ {produto.preco.toFixed(2)}
-          </p>
-
-          {/* --- AVISO DE FARDO --- */}
-          {produto.fardo && (
-            <div style={{
-              backgroundColor: '#FFD700',
-              color: '#000',
-              padding: '10px',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              marginBottom: '15px',
-              display: 'inline-block'
-            }}>
-              LEVE O FARDO ({produto.fardo.quantidade} UN) POR R$ {produto.fardo.preco.toFixed(2)}
+        {/* Lado Esquerdo: Imagem da Bebida */}
+        <div style={{ flex: '1 1 300px', display: 'flex', justifyContent: 'center', backgroundColor: '#fff', borderRadius: '12px', padding: '20px' }}>
+          {produto.imagem ? (
+            <img 
+              src={produto.imagem} 
+              alt={produto.nome} 
+              style={{ width: '100%', maxWidth: '250px', height: 'auto', objectFit: 'contain' }} 
+            />
+          ) : (
+            <div style={{ width: '250px', height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+              Sem imagem
             </div>
           )}
-          {/* ---------------------- */}
+        </div>
+
+        {/* Lado Direito: Informações e Compra */}
+        <div style={{ flex: '2 1 300px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <h1 style={{ color: '#00ff66', margin: '0', fontSize: '2.5rem' }}>{produto.nome}</h1>
           
-          <p style={{ fontSize: '1.1rem', color: '#a0ffa0', margin: '10px 0 20px 0' }}>
-            {semEstoque 
-              ? "Produto esgotado" 
-              : `Disponível: ${produto.estoque} unidades`
-            }
+          <p style={{ color: '#ccc', fontSize: '1.1rem', lineHeight: '1.6' }}>
+            {produto.descricao || "Bebida geladinha pronta para sua festa! O item perfeito para o seu carrinho."}
           </p>
 
-          {/* --- DESCRIÇÃO DINÂMICA --- */}
-          <p style={{ fontSize: '1rem', color: '#e0e0e0', lineHeight: 1.6, margin: '20px 0' }}>
-            {produto.descricao || "Descrição não disponível para este produto."}
-          </p>
-          {/* ------------------------- */}
-          
-          <button
-            onClick={() => onAdicionarAoCarrinho(produto)}
-            className="botao"
-            disabled={semEstoque} 
+          <div style={{ backgroundColor: '#111', padding: '20px', borderRadius: '8px', borderLeft: '4px solid #00ff66', marginTop: '10px' }}>
+            <h2 style={{ color: '#fff', fontSize: '2.2rem', margin: '0 0 10px 0' }}>R$ {produto.preco?.toFixed(2)}</h2>
+            <p style={{ margin: 0, color: produto.estoque > 0 ? '#00cc44' : '#ff4444', fontWeight: 'bold', fontSize: '1.1rem' }}>
+              {produto.estoque > 0 ? `✅ ${produto.estoque} unidades em estoque` : "❌ Esgotado!"}
+            </p>
+          </div>
+
+          <button 
+            onClick={() => adicionarAoCarrinho(produto)} 
+            disabled={produto.estoque <= 0}
+            className="botao" 
+            style={{ 
+              marginTop: '15px', 
+              padding: '18px', 
+              fontSize: '1.3rem', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              gap: '10px',
+              backgroundColor: produto.estoque > 0 ? '#00a64d' : '#444',
+              cursor: produto.estoque > 0 ? 'pointer' : 'not-allowed',
+              opacity: produto.estoque > 0 ? 1 : 0.7
+            }}
           >
-            {semEstoque ? "Esgotado" : "Adicionar ao Carrinho"}
+            <FaCartPlus /> {produto.estoque > 0 ? "Adicionar ao Carrinho" : "Sem Estoque"}
           </button>
         </div>
+
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { useCart } from "../contexts/CartContext";
 
 function NavBar({ isDono, isEntregador, usuario, dadosUsuario }) {
   const [mostrarModalSair, setMostrarModalSair] = useState(false);
+  const [imgError, setImgError] = useState(false); // NOVO: Controle para imagem quebrada
   const navigate = useNavigate();
   
   // ACESSANDO O COFRE AQUI:
@@ -66,8 +67,14 @@ function NavBar({ isDono, isEntregador, usuario, dadosUsuario }) {
 
         <div className="top-bar-actions">
           <div className="user-chip" onClick={() => navigate('/perfil')}>
-            {fotoPerfil ? (
-              <img src={fotoPerfil} alt="Perfil" className="user-avatar" />
+            {/* MÁGICA AQUI: Se tem foto E não deu erro, renderiza a imagem */}
+            {fotoPerfil && !imgError ? (
+              <img 
+                src={fotoPerfil} 
+                alt="Perfil" 
+                className="user-avatar" 
+                onError={() => setImgError(true)} // Se quebrar, ativa o placeholder
+              />
             ) : (
               <div className="user-avatar-placeholder">{inicial}</div>
             )}
