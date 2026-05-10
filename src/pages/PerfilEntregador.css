@@ -1,18 +1,192 @@
-.cartao-entregador-container { max-width: 500px; margin: 0 auto; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; }
-.perfil-header { text-align: center; border-bottom: 1px solid #333; padding-bottom: 20px; width: 100%; }
-.foto-perfil-wrapper { margin-bottom: 10px; }
-.foto-entregador { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #00ff66; box-shadow: 0 0 15px rgba(0, 255, 102, 0.4); }
-.nome-entregador { font-size: 1.5rem; font-weight: bold; margin: 10px 0 5px 0; }
-.badge-rating { background-color: #00ff66; color: #000; display: inline-flex; align-items: center; gap: 5px; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1rem; }
-.detalhes-entrega-box { width: 100%; margin-top: 20px; }
-.subtitulo-entrega { color: #00ff66; font-size: 1.2rem; margin-bottom: 15px; text-align: center; }
-.status-destaque { color: #00ff66; }
-.endereco-box { background-color: #1a1a1a; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 10px; margin: 15px 0; border-left: 3px solid #ff3333; }
-.validacao-seguranca-box { background-color: #111; border: 1px dashed #00ff66; padding: 20px; border-radius: 10px; text-align: center; margin: 25px 0; }
-.dica-codigo { color: #aaa; font-size: 0.9rem; margin-bottom: 15px; }
-.input-otp { width: 100%; max-width: 200px; background-color: #000; border: 2px solid #00ff66; color: #fff; font-size: 2rem; text-align: center; letter-spacing: 15px; padding: 10px; border-radius: 10px; outline: none; }
-.input-otp:focus { box-shadow: 0 0 10px rgba(0, 255, 102, 0.5); }
-.botoes-acao-entregador { display: flex; flex-direction: column; gap: 15px; }
-.botao-sucesso { background-color: #00ff66; color: #000; font-weight: bold; width: 100%; padding: 15px; font-size: 1.1rem; }
-.botao-sucesso:hover { background-color: #00cc52; }
-.botoes-acao-entregador .botao-vermelho { width: 100%; padding: 15px; font-size: 1.1rem; }
+/* =========================================
+   CONTAINER E HEADER DO PERFIL
+========================================= */
+.cartao-entregador-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.perfil-header {
+  text-align: center;
+  border-bottom: 1px solid #333;
+  padding-bottom: 20px;
+  width: 100%;
+}
+
+.foto-perfil-wrapper {
+  margin-bottom: 10px;
+}
+
+.foto-entregador {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #00ff66;
+  box-shadow: 0 0 15px rgba(0, 255, 102, 0.4);
+}
+
+.titulo-entregador {
+  margin-top: 10px;
+}
+
+.nome-entregador {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 10px 0 5px 0;
+}
+
+.badge-rating {
+  background-color: #00ff66;
+  color: #000;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+/* =========================================
+   BOX DE DETALHES DA ENTREGA ATUAL
+========================================= */
+.detalhes-entrega-box {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.subtitulo-entrega {
+  color: #00ff66;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.status-destaque {
+  color: #00ff66;
+  font-weight: bold;
+}
+
+.endereco-box {
+  background-color: #1a1a1a;
+  padding: 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 15px 0;
+  border-left: 3px solid #ff3333;
+}
+
+.icone-mapa {
+  flex-shrink: 0;
+}
+
+/* =========================================
+   SISTEMA DE VALIDAÇÃO (CÓDIGO OTP)
+========================================= */
+.validacao-seguranca-box {
+  background-color: #111;
+  border: 1px dashed #00ff66;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  margin: 25px 0;
+}
+
+.icone-seguranca {
+  margin-bottom: 10px;
+}
+
+.dica-codigo {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.input-otp {
+  width: 100%;
+  max-width: 200px;
+  background-color: #000;
+  border: 2px solid #00ff66;
+  color: #fff;
+  font-size: 2rem;
+  text-align: center;
+  letter-spacing: 15px;
+  padding: 10px;
+  border-radius: 10px;
+  outline: none;
+  transition: box-shadow 0.2s;
+}
+
+.input-otp:focus {
+  box-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+}
+
+/* =========================================
+   BOTÕES DE AÇÃO DO ENTREGADOR (REFORMULADOS)
+========================================= */
+.botoes-acao-entregador {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Estilo Base para botões de ação com altura fixa */
+.btn-acao-dash {
+  width: 100%;
+  height: 56px; /* Altura cravada para normalizar os tamanhos */
+  box-sizing: border-box; /* Garante que bordas não afetem o tamanho */
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  background-color: #1a1a1a;
+}
+
+/* GPS: Contorno e Brilho Azul Elétrico */
+.btn-entregador-gps {
+  border: 2px solid #4285F4;
+  color: #4285F4;
+  box-shadow: 0 0 5px rgba(66, 133, 244, 0.3);
+}
+
+.btn-entregador-gps:hover {
+  background-color: rgba(66, 133, 244, 0.1);
+  box-shadow: 0 0 12px rgba(66, 133, 244, 0.6);
+  color: #fff;
+}
+
+/* Sucesso: Contorno e Brilho Neon Green */
+.btn-entregador-sucesso {
+  border: 2px solid #00ff66;
+  color: #00ff66;
+  box-shadow: 0 0 5px rgba(0, 255, 102, 0.3);
+}
+
+.btn-entregador-sucesso:hover {
+  background-color: rgba(0, 255, 102, 0.1);
+  box-shadow: 0 0 12px rgba(0, 255, 102, 0.6);
+  color: #fff;
+}
+
+.icone-btn-acao {
+  font-size: 1.3rem;
+}
+
+.msg-sem-entregas {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 1.2rem;
+  color: #888;
+}

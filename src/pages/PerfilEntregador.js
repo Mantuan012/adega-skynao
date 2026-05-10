@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaStar, FaMapMarkerAlt, FaShieldAlt, FaUserCircle } from 'react-icons/fa';
+import { FaStar, FaMapMarkerAlt, FaShieldAlt, FaUserCircle, FaRoute } from 'react-icons/fa';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import './PerfilEntregador.css';
@@ -50,6 +50,21 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
     }
   };
 
+  const iniciarRota = () => {
+    if (!pedidoAtual) return;
+
+    if (pedidoAtual.coordenadas?.latitude && pedidoAtual.coordenadas?.longitude) {
+      const { latitude, longitude } = pedidoAtual.coordenadas;
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`, '_blank');
+    } else if (pedidoAtual.enderecoEntrega) {
+      const { rua, numero } = pedidoAtual.enderecoEntrega;
+      const destino = `${rua}, ${numero}, Pontal - SP`;
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destino)}&travelmode=driving`, '_blank');
+    } else {
+      alert("Dados de endereço insuficientes para traçar a rota.");
+    }
+  };
+
   return (
     <div className="cartao cartao-entregador-container">
       <div className="perfil-header">
@@ -61,7 +76,7 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
           )}
         </div>
         
-        <h2 className="titulo-principal" style={{marginTop: '10px'}}>Área do Entregador</h2>
+        <h2 className="titulo-principal titulo-entregador">Área do Entregador</h2>
         <p className="nome-entregador">{dadosUsuario?.nome || 'Entregador'}</p>
         <div className="badge-rating">
           <FaStar color="#000" /> <span>Rating: {dadosUsuario?.rating || '0.0'}</span>
@@ -75,14 +90,14 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
           <p className="status-destaque"><strong>Status:</strong> {pedidoAtual.status}</p>
           
           <div className="endereco-box">
-            <FaMapMarkerAlt color="#ff3333" size={24} style={{flexShrink: 0}} />
+            <FaMapMarkerAlt color="#ff3333" size={24} className="icone-mapa" />
             <span>
-              {pedidoAtual.enderecoEntrega?.rua}, {pedidoAtual.enderecoEntrega?.numero} - {pedidoAtual.enderecoEntrega?.bairro}
+              {pedidoAtual.enderecoEntrega?.rua}, {pedidoAtual.enderecoEntrega?.numero}
             </span>
           </div>
 
           <div className="validacao-seguranca-box">
-            <FaShieldAlt size={24} color="#00ff66" style={{ marginBottom: '10px' }} />
+            <FaShieldAlt size={24} color="#00ff66" className="icone-seguranca" />
             <p><strong>CÓDIGO DE SEGURANÇA</strong></p>
             <p className="dica-codigo">Solicite ao cliente na entrega.</p>
             <input 
@@ -96,17 +111,17 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
           </div>
 
           <div className="botoes-acao-entregador">
-            <button 
-              className="botao botao-sucesso" 
-              onClick={handleValidarEntrega}
-              style={{ width: '100%' }}
-            >
+            <button className="btn-acao-dash btn-entregador-gps" onClick={iniciarRota}>
+              <FaRoute className="icone-btn-acao" /> Abrir Rota no GPS
+            </button>
+
+            <button className="btn-acao-dash btn-entregador-sucesso" onClick={handleValidarEntrega}>
               Confirmar Entrega
             </button>
           </div>
         </div>
       ) : (
-        <p style={{ textAlign: 'center', marginTop: '30px', fontSize: '1.2rem' }}>
+        <p className="msg-sem-entregas">
           Nenhuma entrega pendente no momento.
         </p>
       )}

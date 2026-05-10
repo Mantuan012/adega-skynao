@@ -1,12 +1,18 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { produtos } from '../data/Produtos.js';
 
-// 1. Criamos o Cofre (Context)
 export const CartContext = createContext();
 
-// 2. Criamos o Gerente do Cofre (Provider)
 export function CartProvider({ children, showToast }) {
-  const [carrinho, setCarrinho] = useState([]);
+  // AJUSTE: Inicializa o estado tentando ler o que já estava salvo no navegador
+  const [carrinho, setCarrinho] = useState(() => {
+    const salvo = localStorage.getItem('carrinho_adega');
+    return salvo ? JSON.parse(salvo) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('carrinho_adega', JSON.stringify(carrinho));
+  }, [carrinho]);
 
   const adicionarAoCarrinho = (produto) => {
     const itemNoCarrinho = carrinho.find((item) => item.id === produto.id);
@@ -71,7 +77,6 @@ export function CartProvider({ children, showToast }) {
     });
   };
 
-  // Diminui 1 unidade do item
   const removerDoCarrinho = (produtoId) => {
     setCarrinho((carrinhoAtual) => {
       const itemParaRemover = carrinhoAtual.find((item) => item.id === produtoId);
@@ -101,16 +106,16 @@ export function CartProvider({ children, showToast }) {
 
   const limparCarrinho = () => {
     setCarrinho([]);
+    localStorage.removeItem('carrinho_adega');
   };
 
-  // 3. Exportando todas as ferramentas (incluindo a lixeira nova)
   return (
     <CartContext.Provider value={{
       carrinho,
       adicionarAoCarrinho,
       adicionarComboAoCarrinho,
       removerDoCarrinho,
-      excluirDoCarrinho, // <-- Adicionada aqui!
+      excluirDoCarrinho,
       calcularTotalItem,
       limparCarrinho
     }}>
@@ -119,5 +124,4 @@ export function CartProvider({ children, showToast }) {
   );
 }
 
-// 4. Hook customizado
 export const useCart = () => useContext(CartContext);
