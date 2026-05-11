@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import './NavBar.css';
-import { FaSignOutAlt, FaShoppingCart, FaClipboardList, FaChartLine, FaStore } from "react-icons/fa";
+import { FaSignOutAlt, FaShoppingCart, FaClipboardList, FaChartLine, FaStore, FaUsers, FaBox } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 
@@ -57,9 +57,19 @@ function NavBar({ isDono, isEntregador, usuario, dadosUsuario }) {
               </button>
 
               {isDono && (
-                <button onClick={() => navigate('/dashboard')} className="botao">
-                  <FaChartLine /> Dashboard
-                </button>
+                <>
+                  <button onClick={() => navigate('/dashboard')} className="botao">
+                    <FaChartLine /> Dashboard
+                  </button>
+                  
+                  <button onClick={() => navigate('/gerenciamento-usuarios')} className="botao">
+                    <FaUsers /> Gestão de Usuários
+                  </button>
+                  
+                  <button onClick={() => navigate('/gerenciamento-produtos')} className="botao">
+                    <FaBox /> Gestão de Produtos
+                  </button>
+                </>
               )}
             </>
           )}

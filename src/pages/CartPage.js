@@ -44,6 +44,12 @@ function CartPage({ usuario, dadosUsuario, showToast }) {
       return;
     }
 
+    // Validação de endereço: apenas entregas em Pontal
+    if (dadosUsuario?.bairro?.toLowerCase() !== 'pontal') {
+      showToast("Desculpe, realizamos entregas apenas no bairro Pontal.", 'error');
+      return;
+    }
+
     setIsProcessando(true);
     const idPedido = gerarIdPedido();
     const codigoSeguranca = Math.floor(1000 + Math.random() * 9000).toString();

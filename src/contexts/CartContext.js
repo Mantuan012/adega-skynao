@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext } from 'react';
-import { produtos } from '../data/Produtos.js';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
 
 // 1. Criamos o Cofre (Context)
 export const CartContext = createContext();
@@ -7,6 +8,23 @@ export const CartContext = createContext();
 // 2. Criamos o Gerente do Cofre (Provider)
 export function CartProvider({ children, showToast }) {
   const [carrinho, setCarrinho] = useState([]);
+  const [produtos, setProdutos] = useState([]);
+  const [loadingProdutos, setLoadingProdutos] = useState(true);
+
+  useEffect(() => {
+    const carregarProdutos = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "produtos"));
+        const produtosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setProdutos(produtosData);
+      } catch (error) {
+        console.error("Erro ao carregar produtos:", error);
+      } finally {
+        setLoadingProdutos(false);
+      }
+    };
+    carregarProdutos();
+  }, []);
 
   const adicionarAoCarrinho = (produto) => {
     const itemNoCarrinho = carrinho.find((item) => item.id === produto.id);
@@ -91,12 +109,15 @@ export function CartProvider({ children, showToast }) {
 
   const calcularTotalItem = (item) => {
     if (item.tipo === 'combo') return item.preco * item.quantidade;
+    
+    const precoBase = item.promocao ? item.promocao.precoPromocional : item.preco;
+    
     if (item.fardo && item.quantidade >= item.fardo.quantidade) {
       const numFardos = Math.floor(item.quantidade / item.fardo.quantidade);
       const resto = item.quantidade % item.fardo.quantidade;
-      return (numFardos * item.fardo.preco) + (resto * item.preco);
+      return (numFardos * item.fardo.preco) + (resto * precoBase);
     }
-    return item.preco * item.quantidade;
+    return precoBase * item.quantidade;
   };
 
   const limparCarrinho = () => {
@@ -107,6 +128,8 @@ export function CartProvider({ children, showToast }) {
   return (
     <CartContext.Provider value={{
       carrinho,
+      produtos,
+      loadingProdutos,
       adicionarAoCarrinho,
       adicionarComboAoCarrinho,
       removerDoCarrinho,

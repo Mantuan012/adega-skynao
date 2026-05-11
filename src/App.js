@@ -16,6 +16,8 @@ import CartPage from "./pages/CartPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CombosPage from "./pages/CombosPage";
 import PerfilEntregador from "./pages/PerfilEntregador";
+import GerenciamentoUsuariosPage from "./pages/GerenciamentoUsuariosPage";
+import GerenciamentoProdutosPage from "./pages/GerenciamentoProdutosPage";
 
 // Componentes Fixos
 import NavBar from "./components/NavBar";
@@ -102,6 +104,14 @@ function App() {
                 {/* 4. Rota Privada do Dono/Admin */}
                 <Route path="/dashboard" element={
                   isDono ? <Dashboard /> : <Navigate to="/" />
+                } />
+                
+                <Route path="/gerenciamento-usuarios" element={
+                  isDono ? <GerenciamentoUsuariosPage /> : <Navigate to="/" />
+                } />
+                
+                <Route path="/gerenciamento-produtos" element={
+                  isDono ? <GerenciamentoProdutosPage /> : <Navigate to="/" />
                 } />
                 
                 {/* 5. Rota Privada do Entregador */}

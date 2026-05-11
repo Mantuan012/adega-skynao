@@ -6,7 +6,6 @@ import dayjs from "dayjs";
 import { FaChartBar, FaChartLine, FaChartPie, FaFilePdf, FaSpinner, FaBan } from "react-icons/fa";
 
 // Importações dos novos módulos limpos
-import GerenciamentoUsuarios from "../components/GerenciamentoUsuarios";
 import { gerarRelatorioPremium } from "../utils/geradorPDF";
 import './Dashboard.css'; 
 
@@ -21,9 +20,6 @@ export default function Dashboard({ fechar }) {
   const [dadosPagamento, setDadosPagamento] = useState([]);
   const [filtro, setFiltro] = useState("todos");
 
-  const [usuarios, setUsuarios] = useState([]);
-  const [loadingUsuarios, setLoadingUsuarios] = useState(true);
-
   const lineChartRef = useRef();
   const pieChartRef = useRef();
 
@@ -36,9 +32,6 @@ export default function Dashboard({ fechar }) {
         setIsDono(true);
         const snapshotP = await getDocs(collection(db, "pedidos"));
         setPedidos(snapshotP.docs.map((doc) => doc.data()));
-        const snapshotU = await getDocs(collection(db, "usuarios"));
-        setUsuarios(snapshotU.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        setLoadingUsuarios(false);
       } else {
         setIsDono(false);
       }
@@ -82,11 +75,6 @@ export default function Dashboard({ fechar }) {
     };
     aplicarFiltro();
   }, [pedidos, filtro]);
-
-  const alterarCargo = async (usuarioId, novoTipo) => {
-    await updateDoc(doc(db, "usuarios", usuarioId), { tipo: novoTipo });
-    setUsuarios(usuarios.map(u => u.id === usuarioId ? { ...u, tipo: novoTipo } : u));
-  };
 
   const handleGerarPDF = () => {
     // Chamamos a função externa, passando os dados e as referências da tela
@@ -148,8 +136,6 @@ export default function Dashboard({ fechar }) {
       </div>
 
       <button onClick={handleGerarPDF} className="botao btn-pdf-full"><FaFilePdf /> Gerar Relatório Profissional</button>
-      <hr className="dash-hr" />
-      <GerenciamentoUsuarios usuarios={usuarios} alterarCargo={alterarCargo} loadingUsuarios={loadingUsuarios} />
     </div>
   );
 }
