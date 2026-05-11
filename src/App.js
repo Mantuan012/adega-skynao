@@ -4,10 +4,8 @@ import { auth, db } from "./firebase/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { getDoc, doc } from "firebase/firestore";
 
-// Contexto Global (O "Cofre" do Carrinho)
 import { CartProvider } from "./contexts/CartContext";
 
-// Páginas
 import Login from "./pages/Login";
 import Catalogo from "./pages/Catalogo";
 import MenuPedidos from "./pages/MenuPedidos";
@@ -17,9 +15,7 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import CombosPage from "./pages/CombosPage";
 import PerfilEntregador from "./pages/PerfilEntregador";
 import GerenciamentoUsuariosPage from "./pages/GerenciamentoUsuariosPage";
-import GerenciamentoProdutosPage from "./pages/GerenciamentoProdutosPage";
 
-// Componentes Fixos
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import Toast from "./components/Toast";
@@ -34,7 +30,6 @@ function App() {
   const showToast = (message, type = 'success') => setToast({ message, type });
   const fecharToast = () => setToast(null);
 
-  // Monitorização em tempo real da autenticação
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUsuario(user);
@@ -73,12 +68,10 @@ function App() {
               />
 
               <Routes>
-                {/* 1. Direcionamento Inicial Inteligente */}
                 <Route path="/" element={<Navigate to={isEntregador ? "/entregador" : "/catalogo"} />} />
                 
-                {/* 2. Rotas de Cliente com "Leão de Chácara" (Proteção contra Entregadores) */}
                 <Route path="/catalogo" element={
-                  isEntregador ? <Navigate to="/entregador" /> : <Catalogo />
+                  isEntregador ? <Navigate to="/entregador" /> : <Catalogo isDono={isDono} />
                 } />
                 
                 <Route path="/combos" element={
@@ -94,14 +87,12 @@ function App() {
                   <CartPage usuario={usuario} dadosUsuario={dadosUsuario} showToast={showToast} />
                 } />
 
-                {/* 3. Rotas de Perfil e Histórico (Comuns a todos) */}
                 <Route path="/perfil" element={
                   <UserInfo usuario={usuario} showToast={showToast} fechar={() => window.history.back()} />
                 } />
                 
                 <Route path="/pedidos" element={<MenuPedidos isDono={isDono} usuario={usuario} />} />
                 
-                {/* 4. Rota Privada do Dono/Admin */}
                 <Route path="/dashboard" element={
                   isDono ? <Dashboard /> : <Navigate to="/" />
                 } />
@@ -110,16 +101,10 @@ function App() {
                   isDono ? <GerenciamentoUsuariosPage /> : <Navigate to="/" />
                 } />
                 
-                <Route path="/gerenciamento-produtos" element={
-                  isDono ? <GerenciamentoProdutosPage /> : <Navigate to="/" />
-                } />
-                
-                {/* 5. Rota Privada do Entregador */}
                 <Route path="/entregador" element={
                   isEntregador ? <PerfilEntregador dadosUsuario={dadosUsuario} showToast={showToast} /> : <Navigate to="/" />
                 } />
 
-                {/* 6. Fallback de Segurança */}
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </div>

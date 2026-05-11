@@ -1,29 +1,34 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 
-// 1. Criamos o Cofre (Context)
 export const CartContext = createContext();
 
-// 2. Criamos o Gerente do Cofre (Provider)
 export function CartProvider({ children, showToast }) {
-  const [carrinho, setCarrinho] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [loadingProdutos, setLoadingProdutos] = useState(true);
 
+  const [carrinho, setCarrinho] = useState(() => {
+    const salvo = localStorage.getItem('carrinho_adega');
+    return salvo ? JSON.parse(salvo) : [];
+  });
+
   useEffect(() => {
-    const carregarProdutos = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "produtos"));
-        const produtosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setProdutos(produtosData);
-      } catch (error) {
-        console.error("Erro ao carregar produtos:", error);
-      } finally {
-        setLoadingProdutos(false);
-      }
-    };
-    carregarProdutos();
+    localStorage.setItem('carrinho_adega', JSON.stringify(carrinho));
+  }, [carrinho]);
+
+  // ATUALIZAÇÃO: onSnapshot mantém o catálogo sempre sincronizado com o banco em tempo real
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "produtos"), (snapshot) => {
+      const produtosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProdutos(produtosData);
+      setLoadingProdutos(false);
+    }, (error) => {
+      console.error("Erro ao carregar produtos:", error);
+      setLoadingProdutos(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const adicionarAoCarrinho = (produto) => {
@@ -89,7 +94,6 @@ export function CartProvider({ children, showToast }) {
     });
   };
 
-  // Diminui 1 unidade do item
   const removerDoCarrinho = (produtoId) => {
     setCarrinho((carrinhoAtual) => {
       const itemParaRemover = carrinhoAtual.find((item) => item.id === produtoId);
@@ -122,25 +126,17 @@ export function CartProvider({ children, showToast }) {
 
   const limparCarrinho = () => {
     setCarrinho([]);
+    localStorage.removeItem('carrinho_adega');
   };
 
-  // 3. Exportando todas as ferramentas (incluindo a lixeira nova)
   return (
     <CartContext.Provider value={{
-      carrinho,
-      produtos,
-      loadingProdutos,
-      adicionarAoCarrinho,
-      adicionarComboAoCarrinho,
-      removerDoCarrinho,
-      excluirDoCarrinho, // <-- Adicionada aqui!
-      calcularTotalItem,
-      limparCarrinho
+      carrinho, produtos, loadingProdutos, adicionarAoCarrinho, adicionarComboAoCarrinho,
+      removerDoCarrinho, excluirDoCarrinho, calcularTotalItem, limparCarrinho
     }}>
       {children}
     </CartContext.Provider>
   );
 }
 
-// 4. Hook customizado
 export const useCart = () => useContext(CartContext);

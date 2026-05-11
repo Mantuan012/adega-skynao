@@ -1,19 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import './NavBar.css';
-import { FaSignOutAlt, FaShoppingCart, FaClipboardList, FaChartLine, FaStore, FaUsers, FaBox } from "react-icons/fa";
+import { FaSignOutAlt, FaShoppingCart, FaClipboardList, FaChartLine, FaStore, FaUsers } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
-
-// IMPORTANDO O COFRE:
 import { useCart } from "../contexts/CartContext";
 
 function NavBar({ isDono, isEntregador, usuario, dadosUsuario }) {
   const [mostrarModalSair, setMostrarModalSair] = useState(false);
-  const [imgError, setImgError] = useState(false); // NOVO: Controle para imagem quebrada
+  const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
   
-  // ACESSANDO O COFRE AQUI:
   const { carrinho } = useCart();
   const totalItensBadge = carrinho.reduce((acc, item) => acc + item.quantidade, 0);
 
@@ -22,6 +19,7 @@ function NavBar({ isDono, isEntregador, usuario, dadosUsuario }) {
   const fotoPerfil = usuario?.photoURL;
 
   const confirmarSaida = () => {
+    localStorage.removeItem('carrinho_adega');
     signOut(auth);
     setMostrarModalSair(false);
     navigate('/');
@@ -65,10 +63,6 @@ function NavBar({ isDono, isEntregador, usuario, dadosUsuario }) {
                   <button onClick={() => navigate('/gerenciamento-usuarios')} className="botao">
                     <FaUsers /> Gestão de Usuários
                   </button>
-                  
-                  <button onClick={() => navigate('/gerenciamento-produtos')} className="botao">
-                    <FaBox /> Gestão de Produtos
-                  </button>
                 </>
               )}
             </>
@@ -77,13 +71,12 @@ function NavBar({ isDono, isEntregador, usuario, dadosUsuario }) {
 
         <div className="top-bar-actions">
           <div className="user-chip" onClick={() => navigate('/perfil')}>
-            {/* MÁGICA AQUI: Se tem foto E não deu erro, renderiza a imagem */}
             {fotoPerfil && !imgError ? (
               <img 
                 src={fotoPerfil} 
                 alt="Perfil" 
                 className="user-avatar" 
-                onError={() => setImgError(true)} // Se quebrar, ativa o placeholder
+                onError={() => setImgError(true)} 
               />
             ) : (
               <div className="user-avatar-placeholder">{inicial}</div>
