@@ -14,7 +14,7 @@ import CartPage from "./pages/CartPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CombosPage from "./pages/CombosPage";
 import PerfilEntregador from "./pages/PerfilEntregador";
-import GerenciamentoUsuariosPage from "./pages/GerenciamentoUsuariosPage";
+import GerenciamentoUsuarios from "./pages/GerenciamentoUsuarios";
 
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
@@ -98,7 +98,7 @@ function App() {
                 } />
                 
                 <Route path="/gerenciamento-usuarios" element={
-                  isDono ? <GerenciamentoUsuariosPage /> : <Navigate to="/" />
+                  isDono ? <GerenciamentoUsuarios /> : <Navigate to="/" />
                 } />
                 
                 <Route path="/entregador" element={
