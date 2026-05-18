@@ -52,7 +52,7 @@ body {
 .botao-vermelho:hover { background-color: var(--cor-vermelho-hover); }
 
 /* ========================================= */
-/* BANNER (Se preferir, pode criar Banner.css)*/
+/* BANNER                                    */
 /* ========================================= */
 .banner-container { background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/images/BannerAdegaSkynao.png'); background-size: cover; background-position: center; background-repeat: no-repeat; border-radius: var(--radius-padrao); padding: 20px 30px; margin-bottom: 25px; border: 1px solid var(--cor-primaria-final); box-shadow: 0 0 12px rgba(0, 255, 102, 0.3); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; min-height: 150px; text-decoration: none; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
 .banner-container:hover { transform: scale(1.01); box-shadow: 0 0 16px rgba(0, 255, 102, 0.5); }

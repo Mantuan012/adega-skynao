@@ -1,28 +1,93 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import Banner from '../components/Banner';
-import { FaEdit, FaPlus, FaSave, FaTimes, FaTrash } from 'react-icons/fa'; 
-import { doc, updateDoc, addDoc, deleteDoc, collection, deleteField } from "firebase/firestore";
+import { FaEdit, FaPlus, FaTrash, FaFilter, FaChevronDown, FaChevronUp, FaExclamationTriangle } from 'react-icons/fa'; 
+import { doc, updateDoc, addDoc, deleteDoc, collection, deleteField, getDocs } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
 import './Catalogo.css'; 
+import FormularioProduto from '../components/FormularioProduto';
 
-function Catalogo({ isDono }) {
+// Adicionamos a prop showToast aqui!
+function Catalogo({ isDono, showToast }) {
   const [termoBusca, setTermoBusca] = useState('');
-  const [categoriaAtiva, setCategoriaAtiva] = useState('Todos');
+  const [categoriasAtivas, setCategoriasAtivas] = useState([]);
+  const [mostrarTodosFiltros, setMostrarTodosFiltros] = useState(false);
   
-  // Estados do Modal
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [salvando, setSalvando] = useState(false);
   
+  // O NOVO ESTADO DO MODAL DE CONFIRMAÇÃO
+  const [modalConfirmacao, setModalConfirmacao] = useState({ visivel: false, titulo: '', mensagem: '', acao: null });
+  
+  const [categoriasBD, setCategoriasBD] = useState([]);
+  const [novaCategoria, setNovaCategoria] = useState('');
+
   const navigate = useNavigate();
   const { adicionarAoCarrinho, produtos, loadingProdutos } = useCart(); 
 
-  const categorias = ['Todos', 'Cervejas', 'Destilados', 'Energéticos', 'Refrigerantes', 'Ice', 'Petiscos', 'Tabacaria', 'Sem Álcool'];
+  const buscarCategorias = async () => {
+    try {
+      const snap = await getDocs(collection(db, "categorias"));
+      const lista = snap.docs.map(doc => ({ id: doc.id, nome: doc.data().nome }));
+      setCategoriasBD(lista);
+    } catch (error) {
+      console.error("Erro ao buscar categorias:", error);
+    }
+  };
+
+  useEffect(() => {
+    buscarCategorias();
+  }, []);
+
+  const handleAddCategoria = async () => {
+    if (!novaCategoria.trim()) return;
+    try {
+      await addDoc(collection(db, "categorias"), { nome: novaCategoria.trim() });
+      setNovaCategoria('');
+      buscarCategorias();
+      if(showToast) showToast('Categoria criada com sucesso!', 'success');
+    } catch (error) {
+      if(showToast) showToast('Erro ao criar categoria: ' + error.message, 'error');
+    }
+  };
+
+  // SUBSTITUÍDO O WINDOW.CONFIRM PELO NOSSO MODAL PREMIUM
+  const handleExcluirCategoria = (id, nome) => {
+    setModalConfirmacao({
+      visivel: true,
+      titulo: 'Apagar Categoria',
+      mensagem: `Deseja realmente excluir o filtro "${nome}" de forma definitiva?`,
+      acao: async () => {
+        try {
+          await deleteDoc(doc(db, "categorias", id));
+          buscarCategorias();
+          setCategoriasAtivas(prev => prev.filter(c => c !== nome));
+          if(showToast) showToast('Categoria apagada.', 'success');
+        } catch (error) {
+          if(showToast) showToast('Erro ao apagar: ' + error.message, 'error');
+        }
+      }
+    });
+  };
+
+  const toggleCategoria = (nomeCat) => {
+    setCategoriasAtivas(prevAtivas => {
+      if (prevAtivas.includes(nomeCat)) {
+        return prevAtivas.filter(cat => cat !== nomeCat);
+      } else {
+        return [...prevAtivas, nomeCat];
+      }
+    });
+  };
 
   const produtosFiltrados = produtos.filter((produto) => {
-    const atendeCategoria = categoriaAtiva === 'Todos' || produto.categoria === categoriaAtiva;
+    const prodCatSuja = (produto.categoria || '').toLowerCase().trim();
+    const atendeCategoria = categoriasAtivas.length === 0 || categoriasAtivas.some(catAtiva => {
+      const catAtivaSuja = catAtiva.toLowerCase().trim();
+      return prodCatSuja.includes(catAtivaSuja) || catAtivaSuja.includes(prodCatSuja);
+    });
     const atendeBusca = produto.nome.toLowerCase().includes(termoBusca.toLowerCase());
     return atendeCategoria && atendeBusca;
   });
@@ -38,46 +103,54 @@ function Catalogo({ isDono }) {
     setShowModal(true);
   };
 
-  const excluirProduto = async (produtoId) => {
-    if (window.confirm("Atenção! Tem certeza que deseja excluir este produto do catálogo?")) {
-      await deleteDoc(doc(db, "produtos", String(produtoId)));
-      setShowModal(false);
-    }
+  // SUBSTITUÍDO O WINDOW.CONFIRM PELO NOSSO MODAL PREMIUM
+  const excluirProduto = (produtoId) => {
+    setModalConfirmacao({
+      visivel: true,
+      titulo: 'Excluir Bebida',
+      mensagem: "Atenção! Você tem certeza que deseja retirar este produto do catálogo da Adega?",
+      acao: async () => {
+        try {
+          await deleteDoc(doc(db, "produtos", String(produtoId)));
+          setShowModal(false);
+          if(showToast) showToast('Produto excluído com sucesso!', 'success');
+        } catch (error) {
+          if(showToast) showToast('Erro ao excluir: ' + error.message, 'error');
+        }
+      }
+    });
   };
 
   const salvarProduto = async (produtoEditado) => {
     setSalvando(true);
     try {
-      const nome = produtoEditado.nome?.toString().trim() || '';
-      const categoria = produtoEditado.categoria?.toString() || '';
+      const nome = produtoEditado.nome?.trim() || '';
+      const categoria = produtoEditado.categoria || '';
       if (!nome || !categoria) throw new Error("Nome e categoria são obrigatórios");
 
-      const fardoValido = produtoEditado.fardo && typeof produtoEditado.fardo === 'object';
-      const promocaoValida = produtoEditado.promocao && typeof produtoEditado.promocao === 'object';
-
       if (editingProduct) {
-        const docId = String(editingProduct.id || '');
-        const dadosUpdate = {
-          nome, preco: Number(produtoEditado.preco) || 0, categoria, volume: Number(produtoEditado.volume) || 0,
-          estoque: Math.floor(Number(produtoEditado.estoque)) || 0, imagem: produtoEditado.imagem?.toString() || '',
-          descricao: produtoEditado.descricao?.toString() || '',
-          fardo: fardoValido ? { quantidade: Math.floor(Number(produtoEditado.fardo.quantidade)) || 1, preco: Number(produtoEditado.fardo.preco) || 0 } : deleteField(),
-          promocao: promocaoValida ? { precoPromocional: Number(produtoEditado.promocao.precoPromocional) || 0, descricao: produtoEditado.promocao.descricao?.toString() || '' } : deleteField(),
-        };
-        await updateDoc(doc(db, "produtos", docId), dadosUpdate);
+        const docId = String(editingProduct.id);
+        await updateDoc(doc(db, "produtos", docId), {
+          ...produtoEditado,
+          preco: Number(produtoEditado.preco),
+          volume: Number(produtoEditado.volume),
+          estoque: Math.floor(Number(produtoEditado.estoque)),
+          fardo: produtoEditado.fardo ? { ...produtoEditado.fardo, quantidade: Number(produtoEditado.fardo.quantidade), preco: Number(produtoEditado.fardo.preco) } : deleteField(),
+          promocao: produtoEditado.promocao ? { ...produtoEditado.promocao, precoPromocional: Number(produtoEditado.promocao.precoPromocional) } : deleteField(),
+        });
+        if(showToast) showToast('Produto atualizado!', 'success');
       } else {
-        const dadosInsert = {
-          nome, preco: Number(produtoEditado.preco) || 0, categoria, volume: Number(produtoEditado.volume) || 0,
-          estoque: Math.floor(Number(produtoEditado.estoque)) || 0, imagem: produtoEditado.imagem?.toString() || '',
-          descricao: produtoEditado.descricao?.toString() || '',
-          ...(fardoValido && { fardo: { quantidade: Math.floor(Number(produtoEditado.fardo.quantidade)) || 1, preco: Number(produtoEditado.fardo.preco) || 0 } }),
-          ...(promocaoValida && { promocao: { precoPromocional: Number(produtoEditado.promocao.precoPromocional) || 0, descricao: produtoEditado.promocao.descricao?.toString() || '' } }),
-        };
-        await addDoc(collection(db, "produtos"), dadosInsert);
+        await addDoc(collection(db, "produtos"), {
+          ...produtoEditado,
+          preco: Number(produtoEditado.preco),
+          volume: Number(produtoEditado.volume),
+          estoque: Math.floor(Number(produtoEditado.estoque)),
+        });
+        if(showToast) showToast('Novo produto cadastrado!', 'success');
       }
       setShowModal(false);
     } catch (error) {
-      alert('Erro ao salvar: ' + error.message);
+      if(showToast) showToast('Erro ao guardar: ' + error.message, 'error');
     } finally {
       setSalvando(false);
     }
@@ -85,206 +158,176 @@ function Catalogo({ isDono }) {
 
   if (loadingProdutos) return <div className="catalogo-container"><h2 style={{color: '#00ff66', textAlign: 'center'}}>Carregando catálogo...</h2></div>;
 
+  const categoriasVisiveis = mostrarTodosFiltros ? categoriasBD : categoriasBD.slice(0, 5);
+
   return (
     <div className="catalogo-container">
-      <Banner onBannerClick={() => navigate('/combos')} />
+      <Banner onBannerClick={() => navigate('/combos')} isDono={isDono} />
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-        <h2 className="catalogo-titulo" style={{ margin: 0 }}>Catálogo de Produtos</h2>
+      <div className="cabecalho-acoes">
+        <h2 className="catalogo-titulo">Catálogo de Produtos</h2>
+        
+        <input 
+          type="text" 
+          placeholder="Pesquisar por nome..." 
+          value={termoBusca} 
+          onChange={(e) => setTermoBusca(e.target.value)} 
+          className="busca-input" 
+        />
+
         {isDono && (
-           <button onClick={iniciarNovoProduto} className="botao" style={{ marginBottom: '20px', padding: '10px 20px' }}>
+           <button onClick={iniciarNovoProduto} className="botao" style={{ padding: '10px 20px', display: 'flex', gap: '8px', alignItems: 'center' }}>
              <FaPlus /> Adicionar Produto
            </button>
         )}
       </div>
 
-      <div className="busca-container">
-        <input type="text" placeholder="O que você procura hoje?" value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="busca-input" />
-      </div>
-
-      <div className="categorias-container">
-        {categorias.map((cat) => (
-          <button key={cat} className={`categoria-btn ${categoriaAtiva === cat ? 'ativo' : ''}`} onClick={() => setCategoriaAtiva(cat)}>
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      <div className="produtos-grid">
-        {produtosFiltrados.map((produto) => (
-          <div key={produto.id} className="produto-card">
-            
-            {/* CANETA LARANJA RESTAURADA */}
-            {isDono && (
-              <button className="btn-editar-admin" onClick={(e) => iniciarEdicao(produto, e)}>
-                <FaEdit />
-              </button>
-            )}
-
-            <div className="produto-info-clicavel" onClick={() => navigate(`/produto/${produto.id}`)}>
-              <img src={produto.imagem} alt={produto.nome} className="produto-imagem" />
-              <h3 className="produto-nome">{produto.nome}</h3>
-              <p className="produto-preco">
-                {produto.promocao ? (
-                  <>
-                    <span style={{ textDecoration: 'line-through', color: '#888' }}>R$ {produto.preco.toFixed(2)}</span>
-                    <span style={{ color: '#ff4444', fontWeight: 'bold' }}> R$ {produto.promocao.precoPromocional.toFixed(2)}</span>
-                  </>
-                ) : (
-                  `R$ ${produto.preco.toFixed(2)}`
-                )}
-              </p>
-              {produto.estoque <= 5 && produto.estoque > 0 && <p className="produto-alerta-estoque">Restam apenas {produto.estoque}!</p>}
-            </div>
-            
-            <button className="btn-adicionar" disabled={produto.estoque === 0} onClick={(e) => { e.stopPropagation(); adicionarAoCarrinho(produto); }}>
-              {produto.estoque === 0 ? 'Esgotado' : 'Adicionar'}
-            </button>
+      <div className="catalogo-layout">
+        
+        <aside className="sidebar-filtros">
+          <div className="sidebar-header">
+            <h3><FaFilter size={14}/> Filtros</h3>
+            {categoriasAtivas.length > 0 && <span className="badge-filtros">{categoriasAtivas.length}</span>}
           </div>
-        ))}
+
+          <div className="filtros-lista">
+            {categoriasVisiveis.map((cat) => (
+              <div key={cat.id} className="filtro-item-container">
+                <label className="filtro-checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    checked={categoriasAtivas.includes(cat.nome)} 
+                    onChange={() => toggleCategoria(cat.nome)} 
+                  />
+                  <span className="checkmark"></span>
+                  <span className="texto-categoria">{cat.nome}</span>
+                </label>
+
+                {isDono && (
+                  <FaTrash 
+                    color="#ff4444" 
+                    style={{ cursor: 'pointer', padding: '5px' }} 
+                    onClick={() => handleExcluirCategoria(cat.id, cat.nome)} 
+                    title="Apagar Categoria"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {categoriasBD.length > 5 && (
+            <button className="btn-ver-mais" onClick={() => setMostrarTodosFiltros(!mostrarTodosFiltros)}>
+              {mostrarTodosFiltros ? <><FaChevronUp size={12}/> Ver Menos</> : <><FaChevronDown size={12}/> Ver Mais</>}
+            </button>
+          )}
+
+          {isDono && (
+            <div className="admin-categoria-box">
+              <h4><FaPlus size={14}/> Gerenciar Categorias</h4>
+              <div className="admin-input-row">
+                <input
+                  type="text"
+                  className="input-cat-admin"
+                  placeholder="Nova (Ex: Vinhos)"
+                  value={novaCategoria}
+                  onChange={(e) => setNovaCategoria(e.target.value)}
+                />
+                <button className="btn-add-cat" onClick={handleAddCategoria}>
+                  Criar Categoria
+                </button>
+              </div>
+            </div>
+          )}
+        </aside>
+
+        <main className="conteudo-produtos">
+          <div className="produtos-grid">
+            {produtosFiltrados.length === 0 ? (
+              <div className="mensagem-vazio" style={{ gridColumn: '1 / -1' }}>
+                Nenhuma bebida encontrada com os filtros selecionados.
+              </div>
+            ) : (
+              produtosFiltrados.map((produto) => (
+                <div key={produto.id} className="produto-card">
+                  {isDono && (
+                    <button className="btn-editar-admin" onClick={(e) => iniciarEdicao(produto, e)}>
+                      <FaEdit />
+                    </button>
+                  )}
+
+                  <div className="produto-info-clicavel" onClick={() => navigate(`/produto/${produto.id}`)}>
+                    <img src={produto.imagem || '/placeholder-imagem.png'} alt={produto.nome} className="produto-imagem" />
+                    <h3 className="produto-nome">{produto.nome}</h3>
+                    <p className="produto-preco">
+                      {produto.promocao ? (
+                        <>
+                          <span style={{ textDecoration: 'line-through', color: '#888', fontSize: '1rem' }}>R$ {produto.preco.toFixed(2)}</span>
+                          <span style={{ color: '#ff4444', fontWeight: 'bold' }}> R$ {produto.promocao.precoPromocional.toFixed(2)}</span>
+                        </>
+                      ) : (
+                        `R$ ${produto.preco.toFixed(2)}`
+                      )}
+                    </p>
+                  </div>
+                  
+                  <button className="btn-adicionar" disabled={produto.estoque === 0} onClick={(e) => { e.stopPropagation(); adicionarAoCarrinho(produto); }}>
+                    {produto.estoque === 0 ? 'Esgotado' : 'Adicionar'}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </main>
       </div>
       
-      {produtosFiltrados.length === 0 && <p className="mensagem-vazio">Nenhum produto encontrado.</p>}
-
-      {/* MODAL PROFISSIONAL DE EDIÇÃO */}
+      {/* MODAL DE PRODUTO */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-produto-conteudo">
-             <ProductForm 
+             <FormularioProduto 
                 produto={editingProduct} 
                 onSave={salvarProduto} 
                 onCancel={() => setShowModal(false)} 
                 onDelete={() => excluirProduto(editingProduct.id)} 
-                salvando={salvando} 
+                salvando={salvando}
+                categoriasDisponiveis={categoriasBD} 
              />
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-// FORMULÁRIO ESTRUTURADO E ESTILIZADO
-function ProductForm({ produto, onSave, onCancel, onDelete, salvando }) {
-  const [formData, setFormData] = useState({
-    nome: produto?.nome || '', preco: produto?.preco || 0, categoria: produto?.categoria || '',
-    volume: produto?.volume || 0, estoque: produto?.estoque || 0, imagem: produto?.imagem || '',
-    descricao: produto?.descricao || '', fardo: produto?.fardo || null, promocao: produto?.promocao || null
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'preco' || name === 'volume' || name === 'estoque' ? (parseFloat(value) || 0) : (value || '') }));
-  };
-
-  const handleFardoChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, fardo: { ...prev.fardo, [name]: parseFloat(value) || 0 } }));
-  };
-
-  const handlePromocaoChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, promocao: { ...prev.promocao, [name]: name === 'precoPromocional' ? (parseFloat(value) || 0) : value } }));
-  };
-
-  return (
-    <div>
-      <h3 className="modal-produto-titulo">{produto ? 'Editar Produto' : 'Novo Produto'}</h3>
-      
-      <div className="form-grid-produtos">
-        <div className="form-group">
-          <label className="form-label">Nome da Bebida:</label>
-          <input type="text" name="nome" value={formData.nome} onChange={handleChange} className="form-input" placeholder="Ex: Cerveja Brahma 350ml" />
-        </div>
-        
-        <div className="form-group">
-          <label className="form-label">Preço Unitário (R$):</label>
-          <input type="number" name="preco" value={formData.preco} onChange={handleChange} step="0.01" className="form-input" />
-        </div>
-        
-        <div className="form-group">
-          <label className="form-label">Categoria:</label>
-          <select name="categoria" value={formData.categoria} onChange={handleChange} className="form-input">
-            <option value="">Selecione...</option>
-            {['Cervejas', 'Destilados', 'Energéticos', 'Refrigerantes', 'Ice', 'Petiscos', 'Tabacaria', 'Sem Álcool'].map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        
-        <div className="form-group">
-          <label className="form-label">Estoque Atual:</label>
-          <input type="number" name="estoque" value={formData.estoque} onChange={handleChange} className="form-input" />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label">Volume (L ou ML):</label>
-          <input type="number" name="volume" value={formData.volume} onChange={handleChange} step="0.1" className="form-input" placeholder="Ex: 0.35 para 350ml" />
-        </div>
-        
-        <div className="form-group form-group-full">
-          <label className="form-label">Link da Imagem (URL):</label>
-          <input type="text" name="imagem" value={formData.imagem} onChange={handleChange} className="form-input" placeholder="Cole o link da foto aqui..." />
-        </div>
-
-        <div className="form-group form-group-full">
-          <label className="form-label">Descrição (Opcional):</label>
-          <textarea name="descricao" value={formData.descricao} onChange={handleChange} rows="2" className="form-input" placeholder="Detalhes do produto..."></textarea>
-        </div>
-      </div>
-
-      {/* SESSÃO DE FARDO E PROMOÇÃO */}
-      <div style={{ background: '#1a1a1a', padding: '15px', borderRadius: '8px', borderLeft: '3px solid #00ff66', marginBottom: '15px' }}>
-        <label className="form-checkbox-label">
-          <input type="checkbox" checked={!!formData.fardo} onChange={(e) => setFormData(prev => ({ ...prev, fardo: e.target.checked ? { quantidade: 12, preco: 0 } : null }))} />
-          Vender em Fardo / Caixa
-        </label>
-        
-        {formData.fardo && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '15px' }}>
-            <div className="form-group">
-              <label className="form-label">Unidades no Fardo:</label>
-              <input type="number" name="quantidade" value={formData.fardo.quantidade} onChange={handleFardoChange} className="form-input" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Preço do Fardo (R$):</label>
-              <input type="number" name="preco" value={formData.fardo.preco} onChange={handleFardoChange} step="0.01" className="form-input" />
+      {/* O NOSSO NOVO MODAL DE CONFIRMAÇÃO PREMIUM */}
+      {modalConfirmacao.visivel && (
+        <div className="modal-overlay">
+          <div className="modal-produto-conteudo" style={{ maxWidth: '400px', textAlign: 'center', padding: '30px' }}>
+            <FaExclamationTriangle size={40} color="#ff4444" style={{ marginBottom: '15px' }} />
+            <h3 style={{ color: '#ff4444', marginTop: 0 }}>{modalConfirmacao.titulo}</h3>
+            <p style={{ color: '#ccc', fontSize: '1.05rem', marginBottom: '30px', lineHeight: '1.5' }}>
+              {modalConfirmacao.mensagem}
+            </p>
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+              <button 
+                className="botao" 
+                style={{ background: '#444', flex: 1 }} 
+                onClick={() => setModalConfirmacao({ visivel: false, acao: null })}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="botao" 
+                style={{ background: '#ff4444', color: '#fff', flex: 1, border: 'none' }} 
+                onClick={() => { 
+                  modalConfirmacao.acao(); 
+                  setModalConfirmacao({ visivel: false, acao: null }); 
+                }}
+              >
+                Sim, Excluir
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div style={{ background: '#1a1a1a', padding: '15px', borderRadius: '8px', borderLeft: '3px solid #ffaa00' }}>
-        <label className="form-checkbox-label" style={{ color: '#ffaa00' }}>
-          <input type="checkbox" checked={!!formData.promocao} onChange={(e) => setFormData(prev => ({ ...prev, promocao: e.target.checked ? { precoPromocional: 0, descricao: '' } : null }))} />
-          Ativar Promoção
-        </label>
-        
-        {formData.promocao && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '15px' }}>
-            <div className="form-group">
-              <label className="form-label">Preço com Desconto (R$):</label>
-              <input type="number" name="precoPromocional" value={formData.promocao.precoPromocional} onChange={handlePromocaoChange} step="0.01" className="form-input" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Etiqueta (Ex: Black Friday):</label>
-              <input type="text" name="descricao" value={formData.promocao.descricao} onChange={handlePromocaoChange} className="form-input" />
-            </div>
-          </div>
-        )}
-      </div>
-      
-      <div className="botoes-form-produto">
-        <button type="button" className="botao" disabled={salvando} onClick={() => onSave(formData)} style={{ flex: 2, padding: '15px', fontSize: '1.1rem' }}>
-          <FaSave /> {salvando ? 'Salvando...' : 'Salvar Alterações'}
-        </button>
-        <button type="button" onClick={onCancel} className="botao botao-vermelho" disabled={salvando} style={{ flex: 1 }}>
-          <FaTimes /> Cancelar
-        </button>
-        {produto && (
-           <button type="button" onClick={onDelete} className="botao" style={{ flex: 1, backgroundColor: 'transparent', border: '1px solid #ff4444', color: '#ff4444' }} disabled={salvando}>
-             <FaTrash /> Excluir
-           </button>
-        )}
-      </div>
     </div>
   );
 }

@@ -17,7 +17,6 @@ export function CartProvider({ children, showToast }) {
     localStorage.setItem('carrinho_adega', JSON.stringify(carrinho));
   }, [carrinho]);
 
-  // ATUALIZAÇÃO: onSnapshot mantém o catálogo sempre sincronizado com o banco em tempo real
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "produtos"), (snapshot) => {
       const produtosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

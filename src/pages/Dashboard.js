@@ -1,17 +1,16 @@
 import React, { useEffect, useState, useRef } from "react";
-import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
+import {collection, getDocs, doc, getDoc, query, where, orderBy} from "firebase/firestore";
 import { db, auth } from "../firebase/firebaseConfig";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell} from "recharts";
 import dayjs from "dayjs";
-import { FaChartBar, FaChartLine, FaChartPie, FaFilePdf, FaSpinner, FaBan } from "react-icons/fa";
-
-// Importações dos novos módulos limpos
+import {FaChartBar, FaChartLine, FaChartPie, FaFilePdf, FaSpinner, FaBan} from "react-icons/fa";
 import { gerarRelatorioPremium } from "../utils/geradorPDF";
 import './Dashboard.css'; 
 
 export default function Dashboard({ fechar }) {
   const usuario = auth.currentUser;
   
+  // Estados de Controle
   const [isDono, setIsDono] = useState(null); 
   const [pedidos, setPedidos] = useState([]);
   const [faturamento, setFaturamento] = useState(0);
@@ -20,37 +19,62 @@ export default function Dashboard({ fechar }) {
   const [dadosPagamento, setDadosPagamento] = useState([]);
   const [filtro, setFiltro] = useState("todos");
 
+  // Referências para o PDF
   const lineChartRef = useRef();
   const pieChartRef = useRef();
 
+  // Carregamento Inicial e Verificação de Permissão
   useEffect(() => {
     const carregarDados = async () => {
       if (!usuario) return setIsDono(false);
       
-      const userDoc = await getDoc(doc(db, "usuarios", usuario.uid));
-      if (userDoc.exists() && userDoc.data().tipo === "admin") {
-        setIsDono(true);
-        const snapshotP = await getDocs(collection(db, "pedidos"));
-        setPedidos(snapshotP.docs.map((doc) => doc.data()));
-      } else {
+      try {
+        const userDoc = await getDoc(doc(db, "usuarios", usuario.uid));
+        
+        if (userDoc.exists() && userDoc.data().tipo === "admin") {
+          setIsDono(true);
+          
+          // Otimização: Puxa apenas pedidos dos últimos 30 dias para economizar recursos
+          const limiteData = dayjs().subtract(30, "day").toISOString();
+          const q = query(
+            collection(db, "pedidos"),
+            where("data", ">=", limiteData),
+            orderBy("data", "desc")
+          );
+          
+          const snapshotP = await getDocs(q);
+          setPedidos(snapshotP.docs.map((doc) => doc.data()));
+        } else {
+          setIsDono(false);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar Dashboard:", error);
         setIsDono(false);
       }
     };
+    
     carregarDados();
   }, [usuario]);
 
+  // Lógica de Filtros e Gráficos
   useEffect(() => {
     const aplicarFiltro = () => {
       const agora = dayjs();
       let filtrados = pedidos.filter((p) => p.status === "Entregue");
 
-      if (filtro === "hoje") filtrados = filtrados.filter((p) => dayjs(p.data).isSame(agora, "day"));
-      else if (filtro === "7dias") filtrados = filtrados.filter((p) => dayjs(p.data).isAfter(agora.subtract(7, "day")));
-      else if (filtro === "mes") filtrados = filtrados.filter((p) => dayjs(p.data).isSame(agora, "month"));
+      if (filtro === "hoje") {
+        filtrados = filtrados.filter((p) => dayjs(p.data).isSame(agora, "day"));
+      } else if (filtro === "7dias") {
+        filtrados = filtrados.filter((p) => dayjs(p.data).isAfter(agora.subtract(7, "day")));
+      } else if (filtro === "mes") {
+        filtrados = filtrados.filter((p) => dayjs(p.data).isSame(agora, "month"));
+      }
 
+      // Cálculos Totais
       setFaturamento(filtrados.reduce((acc, p) => acc + (p.total || 0), 0));
       setQuantidade(filtrados.length);
 
+      // Agrupamento para Gráfico de Linha
       const agrupamento = {};
       filtrados.forEach((p) => {
         const dia = new Date(p.data).toLocaleDateString("pt-BR");
@@ -66,6 +90,7 @@ export default function Dashboard({ fechar }) {
       });
       setDadosGrafico(dadosOrdenados);
 
+      // Agrupamento para Gráfico de Pizza
       const pgto = {};
       filtrados.forEach((p) => {
         const f = p.formaPagamento || "Outros";
@@ -73,29 +98,28 @@ export default function Dashboard({ fechar }) {
       });
       setDadosPagamento(Object.entries(pgto).map(([name, value]) => ({ name, value })));
     };
-    aplicarFiltro();
+
+    if (pedidos.length > 0) aplicarFiltro();
   }, [pedidos, filtro]);
 
   const handleGerarPDF = () => {
-    // Chamamos a função externa, passando os dados e as referências da tela
     gerarRelatorioPremium(pedidos, faturamento, quantidade, filtro, lineChartRef.current, pieChartRef.current);
   };
 
   const COLORS = ["#00ff66", "#8884d8", "#ffbb28", "#ff8042"];
 
-  if (isDono === null) return <div className="cartao"><h2 className="dash-title"><FaSpinner /> Carregando Painel...</h2></div>;
+  // Telas de Carregamento e Erro
+  if (isDono === null) return <div className="cartao"><h2 className="dash-title"><FaSpinner className="fa-spin" /> Carregando Painel...</h2></div>;
   if (isDono === false) return <div className="cartao"><h2 className="dash-title" style={{ color: '#ff4444' }}><FaBan /> Acesso Negado</h2><button onClick={fechar} className="botao botao-vermelho">Sair</button></div>;
 
   return (
     <div className="cartao">
-      <div style={{ marginBottom: "20px" }}>
-        <h2 className="dash-title"><FaChartBar /> Dashboard Empresarial</h2>
-      </div>
+      <h2 className="dash-title"><FaChartBar /> Dashboard Empresarial</h2>
 
       <div className="dash-filtros">
-        <label><b>Filtrar:</b>{" "}</label>
+        <label><b>Filtrar Período:</b> </label>
         <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="dash-select">
-          <option value="todos">Todo Período</option>
+          <option value="todos">Últimos 30 dias</option>
           <option value="hoje">Hoje</option>
           <option value="7dias">Últimos 7 Dias</option>
           <option value="mes">Mês Atual</option>
@@ -103,39 +127,41 @@ export default function Dashboard({ fechar }) {
       </div>
 
       <div className="dash-stats">
-        <p><b>Total de Pedidos Entregues:</b> {quantidade}</p>
-        <p><b>Faturamento Total:</b> R$ {faturamento.toFixed(2)}</p>
+        <p><b>Pedidos Entregues:</b> {quantidade}</p>
+        <p><b>Faturamento:</b> R$ {faturamento.toFixed(2)}</p>
       </div>
 
-      <h3 className="dash-h3"><FaChartLine /> Faturamento e Pedidos por Dia</h3>
+      <h3 className="dash-h3"><FaChartLine /> Histórico de Vendas</h3>
       <div ref={lineChartRef} className="dash-grafico">
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={dadosGrafico} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+          <LineChart data={dadosGrafico}>
             <CartesianGrid strokeDasharray="3 3" stroke="#444" />
             <XAxis dataKey="dia" stroke="#ccc" />
             <YAxis stroke="#ccc" />
             <Tooltip contentStyle={{ backgroundColor: "#333", border: "none", color: "#fff" }} />
-            <Legend wrapperStyle={{ color: "#fff" }} />
-            <Line type="monotone" dataKey="faturamento" stroke="#00ff66" strokeWidth={3} name="Faturamento (R$)" />
-            <Line type="monotone" dataKey="pedidos" stroke="#8884d8" strokeWidth={3} name="Pedidos" />
+            <Legend />
+            <Line type="monotone" dataKey="faturamento" stroke="#00ff66" strokeWidth={3} name="R$" />
+            <Line type="monotone" dataKey="pedidos" stroke="#8884d8" strokeWidth={3} name="Qtd" />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      <h3 className="dash-h3"><FaChartPie /> Faturamento por Forma de Pagamento</h3>
+      <h3 className="dash-h3"><FaChartPie /> Meios de Pagamento</h3>
       <div ref={pieChartRef} className="dash-grafico">
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
-            <Pie data={dadosPagamento} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={{ fill: "#fff" }}>
+            <Pie data={dadosPagamento} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
               {dadosPagamento.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
             </Pie>
-            <Tooltip contentStyle={{ backgroundColor: "#333", border: "none", color: "#fff" }} />
-            <Legend wrapperStyle={{ color: "#fff" }} />
+            <Tooltip />
+            <Legend />
           </PieChart>
         </ResponsiveContainer>
       </div>
 
-      <button onClick={handleGerarPDF} className="botao btn-pdf-full"><FaFilePdf /> Gerar Relatório Profissional</button>
+      <button onClick={handleGerarPDF} className="botao btn-pdf-full">
+        <FaFilePdf /> Gerar Relatório Profissional
+      </button>
     </div>
   );
 }

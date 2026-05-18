@@ -1,0 +1,109 @@
+.banner-container-dinamico {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto 30px auto;
+  border-radius: 12px;
+  overflow: hidden; /* Garante que o letreiro respeite as bordas arredondadas */
+  box-shadow: 0 4px 15px rgba(0, 255, 102, 0.2);
+  cursor: pointer;
+}
+
+.banner-container-dinamico:hover .banner-img-dinamico {
+  transform: scale(1.02);
+}
+
+.banner-img-dinamico {
+  width: 100%;
+  display: block; /* Remove espaços em branco nativos de imagens */
+  transition: transform 0.4s ease, filter 0.3s ease;
+  object-fit: cover;
+  max-height: 300px;
+}
+
+/* O NOVO LETREIRO DE CHAMADA PARA AÇÃO */
+.banner-overlay-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  /* Degradê que escurece a base da foto para a letra ficar 100% legível */
+  background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%);
+  padding: 40px 20px 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-align: left;
+  pointer-events: none; /* Deixa o clique passar direto para a imagem */
+}
+
+.banner-icone-fogo {
+  font-size: 2.2rem;
+  filter: drop-shadow(0 0 10px rgba(255, 170, 0, 0.8));
+}
+
+.banner-textos {
+  display: flex;
+  flex-direction: column;
+}
+
+.banner-titulo-texto {
+  color: #FFD700;
+  margin: 0 0 5px 0;
+  font-size: 1.5rem;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.banner-subtitulo-texto {
+  color: #fff;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* O Botão de Edição do Admin */
+.btn-editar-banner {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid #00ff66;
+  color: #00ff66;
+  padding: 8px 15px;
+  border-radius: 30px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.btn-editar-banner:hover {
+  background: #00ff66;
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 255, 102, 0.5);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+/* Ajustes para telas menores (Celulares) */
+@media (max-width: 600px) {
+  .banner-titulo-texto { font-size: 1.2rem; }
+  .banner-subtitulo-texto { font-size: 0.85rem; }
+  .banner-icone-fogo { font-size: 1.8rem; }
+  .banner-overlay-info { padding: 30px 15px 12px 15px; }
+}

@@ -32,18 +32,31 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUsuario(user);
       if (user) {
+        // 1. FECHA A CORTINA: O usuário logou, mas ainda não sabemos o cargo
+        setLoading(true); 
+        
+        // 2. Busca o perfil no banco de dados
         const userRef = doc(db, "usuarios", user.uid);
         const userSnap = await getDoc(userRef);
+        
         if (userSnap.exists()) {
           setDadosUsuario(userSnap.data());
         }
+        
+        // 3. Define o usuário no sistema
+        setUsuario(user); 
+        
+        // 4. ABRE A CORTINA: Agora o React tem todas as informações juntas
+        setLoading(false); 
       } else {
+        // Se deslogou, limpa tudo e libera a tela de Login
+        setUsuario(null);
         setDadosUsuario(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -71,11 +84,11 @@ function App() {
                 <Route path="/" element={<Navigate to={isEntregador ? "/entregador" : "/catalogo"} />} />
                 
                 <Route path="/catalogo" element={
-                  isEntregador ? <Navigate to="/entregador" /> : <Catalogo isDono={isDono} />
+                  isEntregador ? <Navigate to="/entregador" /> : <Catalogo isDono={isDono} showToast={showToast} />
                 } />
                 
                 <Route path="/combos" element={
-                  isEntregador ? <Navigate to="/entregador" /> : <CombosPage />
+                  isEntregador ? <Navigate to="/entregador" /> : <CombosPage isDono={isDono} showToast={showToast} />
                 } />
                 
                 <Route path="/produto/:id" element={

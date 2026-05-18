@@ -1,10 +1,10 @@
 .catalogo-container {
-  padding: 10px;
-  max-width: 1200px;
+  padding: 15px;
+  max-width: 1300px;
   margin: 0 auto;
 }
 
-/* Banner de Combos */
+/* Banner e Cabeçalho */
 .banner-combos-container {
   cursor: pointer;
   margin-bottom: 30px;
@@ -12,80 +12,275 @@
   transition: transform 0.2s ease;
 }
 
-.banner-combos-container:hover {
-  transform: scale(1.02);
+.banner-combos-container:hover { 
+  transform: scale(1.01); 
 }
 
 .banner-combos-img {
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 255, 102, 0.2);
 }
 
 .catalogo-titulo {
   color: #00ff66;
-  text-align: center;
-  margin-bottom: 20px;
   font-size: 2.2rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin: 0;
 }
 
-/* Barra de Busca */
-.busca-container {
-  margin-bottom: 25px;
-  text-align: center;
+.cabecalho-acoes {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 20px;
 }
 
+/* Barra de Busca Topo */
 .busca-input {
   width: 100%;
-  max-width: 600px;
-  padding: 14px 25px;
+  max-width: 400px;
+  padding: 12px 20px;
   border-radius: 30px;
-  border: 1px solid #00ff66;
+  border: 1px solid #444;
   background-color: rgba(30, 30, 30, 0.8);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 1rem;
   outline: none;
-  transition: box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .busca-input:focus {
-  box-shadow: 0 0 12px rgba(0, 255, 102, 0.5);
+  border-color: #00ff66;
+  box-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
 }
 
-/* Categorias */
-.categorias-container {
+/* =========================================
+   NOVO LAYOUT: SIDEBAR (ESQUERDA) + CONTEÚDO
+   ========================================= */
+.catalogo-layout {
   display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 15px;
-  margin-bottom: 30px;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 30px;
 }
 
-.categoria-btn {
-  background: #2a2a2a;
-  color: #ccc;
-  border: 1px solid #444;
-  padding: 10px 20px;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  font-weight: 500;
+@media (min-width: 900px) {
+  .catalogo-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
 }
 
-.categoria-btn.ativo, .categoria-btn:hover {
+/* Barra Lateral de Filtros */
+.sidebar-filtros {
+  width: 100%;
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+@media (min-width: 900px) {
+  .sidebar-filtros {
+    width: 280px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 20px;
+  }
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.sidebar-header h3 {
+  color: #fff;
+  margin: 0;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+}
+
+.badge-filtros {
   background: #00ff66;
   color: #000;
-  border-color: #00ff66;
   font-weight: bold;
-  transform: translateY(-2px);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.9rem;
 }
 
-/* Grid de Produtos */
+/* Caixas de Seleção Personalizadas (Checkboxes) */
+.filtros-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filtro-item-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s;
+  padding: 5px;
+  border-radius: 6px;
+}
+
+.filtro-item-container:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.filtro-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1.05rem;
+  user-select: none;
+  flex-grow: 1;
+}
+
+.filtro-checkbox-label input {
+  display: none;
+}
+
+.checkmark {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #666;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+  background: #111;
+}
+
+.filtro-checkbox-label:hover .checkmark { border-color: #00ff66; }
+
+.filtro-checkbox-label input:checked ~ .checkmark {
+  background: #00ff66;
+  border-color: #00ff66;
+}
+
+.checkmark::after {
+  content: '';
+  width: 5px;
+  height: 10px;
+  border: solid #000;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+  display: none;
+  margin-bottom: 2px;
+}
+
+.filtro-checkbox-label input:checked ~ .checkmark::after { display: block; }
+
+.filtro-checkbox-label input:checked ~ .texto-categoria {
+  color: #00ff66;
+  font-weight: bold;
+}
+
+/* O NOVO VISUAL DO BOTÃO VER MAIS / VER MENOS */
+.btn-ver-mais {
+  background: rgba(0, 255, 102, 0.05);
+  border: 1px solid rgba(0, 255, 102, 0.2);
+  color: #00ff66;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 15px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-ver-mais:hover {
+  background: rgba(0, 255, 102, 0.15);
+  border-color: #00ff66;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 255, 102, 0.1);
+}
+
+/* O EMBELEZAMENTO DO CARD DE ADMINISTRAÇÃO (SÓ O VICTOR VÊ) */
+.admin-categoria-box {
+  background: linear-gradient(145deg, #1a1a1a, #111);
+  border: 1px solid #333;
+  border-top: 3px solid #00ff66;
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 30px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.admin-categoria-box h4 {
+  color: #00ff66;
+  margin: 0 0 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.admin-input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-cat-admin {
+  background: #000;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  outline: none;
+}
+.input-cat-admin:focus { border-color: #00ff66; }
+
+.btn-add-cat {
+  background: #00ff66;
+  color: #000;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+.btn-add-cat:hover { filter: brightness(1.1); box-shadow: 0 0 10px rgba(0,255,102,0.3); }
+
+/* =========================================
+   ÁREA DE PRODUTOS (DIREITA)
+   ========================================= */
+.conteudo-produtos {
+  flex-grow: 1;
+}
+
 .produtos-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -93,25 +288,26 @@
 }
 
 .produto-card {
-  background: rgba(15, 15, 15, 0.9);
+  background: rgba(20, 20, 20, 0.8);
   border: 1px solid #333;
   border-radius: 16px;
   padding: 20px;
   text-align: center;
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
 .produto-card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-5px);
   border-color: #00ff66;
-  box-shadow: 0 8px 20px rgba(0, 255, 102, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 255, 102, 0.15);
 }
 
-/* BOTÃO DE EDIÇÃO RÁPIDA (ADMIN) */
 .btn-editar-admin {
   position: absolute;
   top: 10px;
@@ -131,14 +327,9 @@
   transition: transform 0.2s;
 }
 
-.btn-editar-admin:hover {
-  transform: scale(1.1);
-}
+.btn-editar-admin:hover { transform: scale(1.1); }
 
-.produto-info-clicavel {
-  cursor: pointer;
-  flex-grow: 1;
-}
+.produto-info-clicavel { cursor: pointer; flex-grow: 1; }
 
 .produto-imagem {
   width: 100%;
@@ -148,9 +339,7 @@
   transition: transform 0.3s ease;
 }
 
-.produto-card:hover .produto-imagem {
-  transform: scale(1.05);
-}
+.produto-card:hover .produto-imagem { transform: scale(1.08); }
 
 .produto-nome {
   font-size: 1.1rem;
@@ -169,18 +358,6 @@
   margin-bottom: 10px;
 }
 
-.produto-alerta-estoque {
-  font-size: 0.85rem;
-  color: #ffaa00;
-  margin-bottom: 15px;
-  font-weight: bold;
-  background: rgba(255, 170, 0, 0.1);
-  padding: 4px 8px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-/* Botão de Adicionar */
 .btn-adicionar {
   width: 100%;
   background: linear-gradient(to right, #007a33, #00a64d);
@@ -195,20 +372,9 @@
   margin-top: 10px;
 }
 
-.btn-adicionar:hover:not(:disabled) {
-  filter: brightness(1.2);
-}
-
-.btn-adicionar:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.btn-adicionar:disabled {
-  background: #333;
-  color: #666;
-  cursor: not-allowed;
-  filter: none;
-}
+.btn-adicionar:hover:not(:disabled) { filter: brightness(1.2); }
+.btn-adicionar:active:not(:disabled) { transform: scale(0.97); }
+.btn-adicionar:disabled { background: #333; color: #666; cursor: not-allowed; filter: none; }
 
 .mensagem-vazio {
   text-align: center;
@@ -220,46 +386,23 @@
   border-radius: 12px;
 }
 
-/* =========================================
-   MODAL DE EDIÇÃO DE PRODUTOS (ADMIN)
-========================================= */
+/* Modais */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background-color: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(5px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; backdrop-filter: blur(5px);
 }
 
 .modal-produto-conteudo {
-  background-color: #111;
-  border: 1px solid #00ff66;
-  border-radius: 12px;
-  padding: 30px;
-  width: 95%;
-  max-width: 700px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0, 255, 102, 0.2);
-  animation: modalSairAnimacao 0.3s ease-out;
+  background-color: #111; border: 1px solid #00ff66; border-radius: 12px;
+  padding: 30px; width: 95%; max-width: 700px; max-height: 90vh;
+  overflow-y: auto; box-shadow: 0 10px 30px rgba(0, 255, 102, 0.2);
 }
 
-.modal-produto-titulo {
-  color: #00ff66;
-  font-size: 1.8rem;
-  margin-top: 0;
-  margin-bottom: 25px;
-  text-align: center;
-  border-bottom: 1px solid #333;
-  padding-bottom: 15px;
-}
-
+/* =========================================
+   ESTILOS DO FORMULÁRIO DO MODAL (DARK MODE)
+   ========================================= */
 .form-grid-produtos {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -283,6 +426,7 @@
   font-size: 0.95rem;
 }
 
+/* O visual premium dos campos de digitação */
 .form-input {
   padding: 12px;
   border-radius: 6px;
@@ -290,29 +434,93 @@
   background-color: #1a1a1a;
   color: #fff;
   font-size: 1rem;
-  transition: border-color 0.2s;
+  transition: all 0.3s ease;
   outline: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
   border-color: #00ff66;
   background-color: #222;
+  box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
 }
 
-.form-checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #00ff66;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 10px;
+/* Tratamento VIP para a caixa de descrição */
+textarea.form-input {
+  min-height: 100px;
+  resize: vertical; 
+  line-height: 1.5;
+  font-family: inherit; 
 }
 
+/* =========================================
+   BOTÕES DO FORMULÁRIO (PADRONIZAÇÃO)
+   ========================================= */
 .botoes-form-produto {
   display: flex;
   gap: 15px;
-  margin-top: 30px;
+  margin-top: 25px;
   border-top: 1px solid #333;
   padding-top: 20px;
+  flex-wrap: wrap; 
+}
+
+.btn-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px; 
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+  min-height: 50px;
+}
+
+.btn-form:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* O Botão Principal (Salvar) */
+.btn-form-salvar {
+  flex: 2;
+  background: linear-gradient(to right, #007a33, #00a64d);
+  color: #fff;
+}
+
+.btn-form-salvar:hover:not(:disabled) {
+  filter: brightness(1.2);
+  box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+}
+
+/* O Botão Neutro (Cancelar) */
+.btn-form-cancelar {
+  flex: 1;
+  background: #333;
+  color: #ccc;
+}
+
+.btn-form-cancelar:hover:not(:disabled) {
+  background: #444;
+  color: #fff;
+}
+
+/* O Botão de Perigo (Excluir) */
+.btn-form-excluir {
+  flex: 1;
+  background: rgba(255, 68, 68, 0.05); 
+  border: 1px solid #ff4444;
+  color: #ff4444;
+}
+
+.btn-form-excluir:hover:not(:disabled) {
+  background: #ff4444;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
 }

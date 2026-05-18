@@ -1,6 +1,46 @@
-/* src/components/Toast.css */
-.toast-container { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 9999; color: white; font-weight: bold; font-size: 1rem; user-select: none; display: flex; align-items: center; gap: 10px; }
-.toast-success { background-color: #00cc44; border: 1px solid #00ff66; }
-.toast-error { background-color: var(--cor-vermelho); border: 1px solid var(--cor-vermelho-hover); }
-.toast-icon { display: flex; align-items: center; }
-.toast-message { flex-grow: 1; }
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  z-index: 99999;
+  color: white;
+  font-weight: 500;
+  font-size: 1.05rem;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideInRight 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  backdrop-filter: blur(10px); /* Efeito de vidro */
+}
+
+.toast-success {
+  background-color: rgba(0, 204, 68, 0.9);
+  border: 1px solid #00ff66;
+  border-left: 6px solid #00ff66; /* Detalhe lateral charmoso */
+}
+
+.toast-error {
+  background-color: rgba(204, 0, 0, 0.9);
+  border: 1px solid #ff4444;
+  border-left: 6px solid #ff4444;
+}
+
+.toast-icon { 
+  display: flex; 
+  align-items: center; 
+  font-size: 1.3rem; 
+}
+
+.toast-message { 
+  flex-grow: 1; 
+  letter-spacing: 0.5px; 
+}

@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './MenuPedidos.css'; 
-import { 
-  collection, query, where, onSnapshot, doc, updateDoc, 
-  deleteDoc, orderBy, limit, startAfter, getDocs 
-} from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, orderBy, limit, startAfter, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import dayjs from 'dayjs'; 
-import { FaHistory, FaBolt, FaRoute } from 'react-icons/fa'; 
+import { FaHistory, FaBolt, FaRoute, FaUndo } from 'react-icons/fa'; 
 
 const MenuPedidos = ({ isDono, usuario }) => {
   const [pedidos, setPedidos] = useState([]);
@@ -19,6 +16,9 @@ const MenuPedidos = ({ isDono, usuario }) => {
   
   const [resetTrigger, setResetTrigger] = useState(0);
   const [busca, setBusca] = useState('');
+
+  // Estado do Modal Customizado
+  const [modal, setModal] = useState({ isOpen: false, titulo: '', mensagem: '', tipo: 'sucesso', acaoConfirmar: null });
 
   const limiteItens = 10; 
 
@@ -62,6 +62,15 @@ const MenuPedidos = ({ isDono, usuario }) => {
 
     return () => unsubscribe();
   }, [usuario, isDono, modoHistoricoAdmin, limiteItens, resetTrigger]); 
+
+  // Funções de Controle do Modal
+  const abrirModal = (titulo, mensagem, tipo, acao) => {
+    setModal({ isOpen: true, titulo, mensagem, tipo, acaoConfirmar: acao });
+  };
+
+  const fecharModal = () => {
+    setModal({ isOpen: false, titulo: '', mensagem: '', tipo: 'sucesso', acaoConfirmar: null });
+  };
 
   const carregarMaisPedidos = async () => {
     if (!ultimoDoc || carregandoMais) return;
@@ -115,14 +124,38 @@ const MenuPedidos = ({ isDono, usuario }) => {
     }
   };
 
-  const excluirPedido = async (pedidoId) => {
-    if (window.confirm("Atenção: Você está excluindo este pedido permanentemente. Deseja continuar?")) {
+  // Lógicas Extraídas para Usar o Modal Customizado
+  const handleDespachar = (pedidoId) => {
+    abrirModal('Despachar Pedido', `Confirma que o pedido #${pedidoId} está separado e pronto para retirada do entregador?`, 'sucesso', () => {
+      atualizarStatus(pedidoId, 'Pronto');
+      fecharModal();
+    });
+  };
+
+  const handleDesfazer = (pedidoId) => {
+    abrirModal('Desfazer Despacho', `O pedido #${pedidoId} voltará para "Em Preparo". Deseja continuar?`, 'sucesso', () => {
+      atualizarStatus(pedidoId, 'Em Preparo');
+      fecharModal();
+    });
+  };
+
+  const handleBaixaManual = (pedidoId) => {
+    abrirModal('Baixa Manual', `Atenção: Deseja forçar a baixa do pedido #${pedidoId} como "Entregue" manualmente sem o código do cliente?`, 'perigo', () => {
+      atualizarStatus(pedidoId, 'Entregue');
+      fecharModal();
+    });
+  };
+
+  const excluirPedido = (pedidoId) => {
+    abrirModal('Excluir Pedido', `Ação irreversível! Deseja apagar o pedido #${pedidoId} permanentemente do sistema?`, 'perigo', async () => {
       try {
         await deleteDoc(doc(db, "pedidos", pedidoId));
+        fecharModal();
       } catch (error) {
         console.error("Erro ao excluir pedido:", error);
+        fecharModal();
       }
-    }
+    });
   };
 
   const iniciarRota = (pedido) => {
@@ -158,6 +191,22 @@ const MenuPedidos = ({ isDono, usuario }) => {
   return (
     <div className="menu-pedidos-wrapper">
       
+      {/* Modal Customizado Renderizado no Topo */}
+      {modal.isOpen && (
+        <div className="modal-overlay-custom">
+          <div className={`modal-conteudo-custom ${modal.tipo === 'perigo' ? 'modal-conteudo-custom-danger' : ''}`}>
+            <h3>{modal.titulo}</h3>
+            <p>{modal.mensagem}</p>
+            <div className="modal-botoes">
+              <button onClick={fecharModal} className="btn-modal-cancelar">Cancelar</button>
+              <button onClick={modal.acaoConfirmar} className={modal.tipo === 'perigo' ? 'btn-modal-danger' : 'btn-modal-confirmar'}>
+                Sim, Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="menu-pedidos-header">
         <h2 className={`titulo-principal ${isDono ? 'titulo-margin-admin' : 'titulo-margin-cliente'}`}>
           {!isDono ? "Meus Pedidos" : (modoHistoricoAdmin ? "Histórico Geral de Pedidos" : "Painel de Operação (Turno Atual)")}
@@ -194,6 +243,7 @@ const MenuPedidos = ({ isDono, usuario }) => {
               <option value="Pendentes">Pendentes</option>
               <option value="Todos">Todos</option>
               <option value="Em Preparo">Em Preparo</option>
+              <option value="Pronto">Pronto</option>
               <option value="Saiu para Entrega">Saiu para Entrega</option>
               <option value="Entregue">Entregue</option>
             </select>
@@ -225,6 +275,7 @@ const MenuPedidos = ({ isDono, usuario }) => {
               
               <div className="box-endereco">
                 <p><b>Entrega para:</b> {pedido.enderecoEntrega?.nome}</p>
+                <p><b>Bairro:</b> {pedido.enderecoEntrega?.bairro || 'Não informado'}</p>
                 <p><b>Endereço:</b> {pedido.enderecoEntrega?.rua}, {pedido.enderecoEntrega?.numero}</p>
               </div>
 
@@ -243,16 +294,23 @@ const MenuPedidos = ({ isDono, usuario }) => {
               {isDono && (
                 <div className="botoes-acao-admin">
                   {pedido.status === 'Em Preparo' && (
-                    <button onClick={() => atualizarStatus(pedido.id, 'Saiu para Entrega')} className="btn-acao-admin btn-despachar">
+                    <button onClick={() => handleDespachar(pedido.id)} className="btn-acao-admin btn-entregar">
                       Despachar
                     </button>
                   )}
+                  
+                  {pedido.status === 'Pronto' && (
+                    <button onClick={() => handleDesfazer(pedido.id)} className="btn-acao-admin btn-laranja">
+                      <FaUndo /> Desfazer Despacho
+                    </button>
+                  )}
+
                   {pedido.status === 'Saiu para Entrega' && (
                     <>
                       <button onClick={() => iniciarRota(pedido)} className="btn-acao-admin btn-rota">
                         <FaRoute size={16} /> Abrir Rota no GPS
                       </button>
-                      <button onClick={() => atualizarStatus(pedido.id, 'Entregue')} className="btn-acao-admin btn-entregar">
+                      <button onClick={() => handleBaixaManual(pedido.id)} className="btn-acao-admin btn-entregar">
                         Confirmar Entrega
                       </button>
                     </>

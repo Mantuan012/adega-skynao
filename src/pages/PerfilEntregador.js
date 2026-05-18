@@ -1,98 +1,259 @@
 import React, { useState, useEffect } from 'react';
-import { FaStar, FaMapMarkerAlt, FaShieldAlt, FaUserCircle, FaRoute } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaShieldAlt, FaUserCircle, FaRoute, FaBoxOpen, FaMotorcycle, FaCheck, FaInfoCircle, FaUndo, FaListOl, FaTruckLoading, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+import { db, auth } from '../firebase/firebaseConfig';
+import './PerfilEntregador.css';
 
 const PerfilEntregador = ({ showToast, dadosUsuario }) => {
-  const [pedidoAtual, setPedidoAtual] = useState(null);
-  const [codigoValidacao, setCodigoValidacao] = useState('');
+  const [pedidosDisponiveis, setPedidosDisponiveis] = useState([]);
+  const [minhaBag, setMinhaBag] = useState([]);
+  const [codigosValidacao, setCodigosValidacao] = useState({});
+  const [itensExpandidos, setItensExpandidos] = useState({}); 
+  const [carregando, setCarregando] = useState(true);
+  
+  const [modal, setModal] = useState({ isOpen: false, titulo: '', mensagem: '', acaoConfirmar: null });
 
+  const entregadorId = auth.currentUser?.uid;
+  
+  // CORREÇÃO: Transformando a foto num estado reativo
+  const [fotoPerfil, setFotoPerfil] = useState(null);
+
+  // NOVO: "Espião" para garantir que a foto carregue mesmo se o React for mais rápido que o Firebase
   useEffect(() => {
-    const q = query(collection(db, "pedidos"), where("status", "==", "Saiu para Entrega"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      if (!querySnapshot.empty) {
-        const listaPendentes = [];
-        querySnapshot.forEach((docData) => listaPendentes.push({ docId: docData.id, ...docData.data() }));
-        listaPendentes.sort((a, b) => new Date(a.data) - new Date(b.data));
-        setPedidoAtual(listaPendentes[0]);
-      } else {
-        setPedidoAtual(null); 
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setFotoPerfil(dadosUsuario?.foto || user.photoURL);
       }
     });
-    return () => unsubscribe();
-  }, []);
+    return () => unsubscribeAuth();
+  }, [dadosUsuario]);
 
-  const handleValidarEntrega = async () => {
-    const codigoCorreto = pedidoAtual.codigoSeguranca ? String(pedidoAtual.codigoSeguranca).trim() : "1234";
-    if (String(codigoValidacao).trim() === codigoCorreto) {
+  useEffect(() => {
+    if (!entregadorId) return;
+
+    const qDisp = query(collection(db, "pedidos"), where("status", "==", "Pronto"));
+    const unsubDisp = onSnapshot(qDisp, (snap) => {
+      const lista = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+      setPedidosDisponiveis(lista.sort((a, b) => new Date(a.data) - new Date(b.data)));
+      setCarregando(false);
+    });
+
+    const qBag = query(collection(db, "pedidos"), 
+      where("status", "==", "Saiu para Entrega"),
+      where("entregadorId", "==", entregadorId)
+    );
+    const unsubBag = onSnapshot(qBag, (snap) => {
+      const lista = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+      setMinhaBag(lista.sort((a, b) => new Date(a.data) - new Date(b.data)));
+    });
+
+    return () => { unsubDisp(); unsubBag(); };
+  }, [entregadorId]);
+
+  const calcularTotalItens = (itens) => {
+    if (!itens) return 0;
+    return itens.reduce((total, item) => total + (Number(item.quantidade) || Number(item.qtd) || 1), 0);
+  };
+
+  const obterBairro = (pedido) => {
+    return pedido.enderecoEntrega?.bairro || pedido.bairro || 'Bairro não informado';
+  };
+
+  const toggleItens = (pedidoId) => {
+    setItensExpandidos(prev => ({ ...prev, [pedidoId]: !prev[pedidoId] }));
+  };
+
+  const abrirModal = (titulo, mensagem, acao) => {
+    setModal({ isOpen: true, titulo, mensagem, acaoConfirmar: acao });
+  };
+
+  const fecharModal = () => {
+    setModal({ isOpen: false, titulo: '', mensagem: '', acaoConfirmar: null });
+  };
+
+  const pegarPedido = (pedido) => {
+    abrirModal(
+      'Assumir Rota', 
+      `Você vai recolher o Pedido #${pedido.idPedido || pedido.docId.slice(0,6)} e iniciar a entrega. Confirma?`, 
+      async () => {
+        try {
+          await updateDoc(doc(db, "pedidos", pedido.docId), { 
+            status: "Saiu para Entrega",
+            entregadorId,
+            nomeEntregador: dadosUsuario?.nome || "Entregador"
+          });
+          showToast('Pedido recolhido com sucesso!', 'success');
+          fecharModal();
+        } catch (e) { showToast('Erro ao atualizar status.', 'error'); fecharModal(); }
+      }
+    );
+  };
+
+  const devolverPedido = (pedido) => {
+    abrirModal(
+      'Devolver Pedido', 
+      `Tem certeza que deseja devolver o Pedido #${pedido.idPedido || pedido.docId.slice(0,6)} para a bancada da adega?`, 
+      async () => {
+        try {
+          await updateDoc(doc(db, "pedidos", pedido.docId), { 
+            status: "Pronto", entregadorId: null, nomeEntregador: null
+          });
+          showToast('Pedido devolvido para a adega.', 'success');
+          fecharModal();
+        } catch (e) { showToast('Erro ao devolver pedido.', 'error'); fecharModal(); }
+      }
+    );
+  };
+
+  const finalizarEntrega = async (pedido) => {
+    const digitado = codigosValidacao[pedido.docId] || '';
+    const correto = pedido.codigoSeguranca ? String(pedido.codigoSeguranca).trim() : "1234";
+    
+    if (digitado === correto) {
       try {
-        await updateDoc(doc(db, "pedidos", pedidoAtual.docId), { status: "Entregue" });
-        showToast('Sucesso: Pedido entregue!', 'success');
-        setCodigoValidacao('');
-      } catch (error) { showToast('Erro de conexão.', 'error'); }
-    } else { showToast('Erro: Código inválido.', 'error'); }
+        await updateDoc(doc(db, "pedidos", pedido.docId), { status: "Entregue" });
+        showToast('Entrega confirmada!', 'success');
+        setCodigosValidacao(prev => { const n = {...prev}; delete n[pedido.docId]; return n; });
+      } catch (e) { showToast('Erro de conexão.', 'error'); }
+    } else { showToast('Código de segurança incorreto.', 'error'); }
   };
 
-  const iniciarRota = () => {
-    if (!pedidoAtual) return;
-    if (pedidoAtual.coordenadas?.latitude && pedidoAtual.coordenadas?.longitude) {
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=$${pedidoAtual.coordenadas.latitude},${pedidoAtual.coordenadas.longitude}&travelmode=driving`, '_blank');
-    } else if (pedidoAtual.enderecoEntrega) {
-      const destino = `${pedidoAtual.enderecoEntrega.rua}, ${pedidoAtual.enderecoEntrega.numero}, Pontal - SP`;
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=$${encodeURIComponent(destino)}&travelmode=driving`, '_blank');
-    }
+  const abrirGPS = (pedido) => {
+    const destino = encodeURIComponent(`${pedido.enderecoEntrega?.rua}, ${pedido.enderecoEntrega?.numero}, Pontal - SP`);
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destino}&travelmode=driving`, '_blank');
   };
 
-  const btnGPSStyle = {
-    flex: 1, minWidth: '150px', height: '56px', boxSizing: 'border-box', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'transparent',
-    border: '2px solid #4285F4', color: '#4285F4', boxShadow: '0 0 5px rgba(66, 133, 244, 0.3)'
-  };
-
-  const btnConfirmStyle = {
-    flex: 1, minWidth: '150px', height: '56px', boxSizing: 'border-box', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'transparent',
-    border: '2px solid #00ff66', color: '#00ff66', boxShadow: '0 0 5px rgba(0, 255, 102, 0.3)'
-  };
+  if (carregando) return <div className="entregador-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh'}}><p style={{color: '#00ff66', fontSize: '1.2rem'}}>Sincronizando rotas...</p></div>;
 
   return (
-    <div className="cartao" style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ textAlign: 'center', borderBottom: '1px solid #333', paddingBottom: '20px', width: '100%' }}>
-        {dadosUsuario?.foto ? ( <img src={dadosUsuario.foto} alt="Perfil" style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #00ff66' }} /> ) : ( <FaUserCircle size={80} color="#00ff66" /> )}
-        <h2 style={{ color: '#00ff66', marginTop: '10px' }}>Área do Entregador</h2>
-        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '10px 0 5px 0' }}>{dadosUsuario?.nome || 'Entregador'}</p>
-      </div>
-
-      {pedidoAtual ? (
-        <div style={{ width: '100%', marginTop: '20px' }}>
-          <h3 style={{ color: '#00ff66', textAlign: 'center', marginBottom: '15px' }}>Entrega Atual</h3>
-          <p><strong>ID:</strong> #{pedidoAtual.idPedido}</p>
-          <p><strong>Status:</strong> <span style={{ color: '#00ff66', fontWeight: 'bold' }}>{pedidoAtual.status}</span></p>
-          
-          <div style={{ background: '#1a1a1a', padding: '15px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px', margin: '15px 0', borderLeft: '3px solid #ff3333' }}>
-            <FaMapMarkerAlt color="#ff3333" size={24} style={{ flexShrink: 0 }} />
-            <span>{pedidoAtual.enderecoEntrega?.rua}, {pedidoAtual.enderecoEntrega?.numero}</span>
-          </div>
-
-          <div style={{ background: '#111', border: '1px dashed #00ff66', padding: '20px', borderRadius: '10px', textAlign: 'center', margin: '25px 0' }}>
-            <FaShieldAlt size={24} color="#00ff66" style={{ marginBottom: '10px' }} />
-            <p style={{ fontWeight: 'bold' }}>CÓDIGO DE SEGURANÇA</p>
-            <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '15px' }}>Solicite ao cliente na entrega.</p>
-            <input type="text" maxLength="4" placeholder="0000" value={codigoValidacao} onChange={(e) => setCodigoValidacao(e.target.value.replace(/\D/g, ''))} style={{ width: '100%', maxWidth: '200px', background: '#000', border: '2px solid #00ff66', color: '#fff', fontSize: '2rem', textAlign: 'center', letterSpacing: '15px', padding: '10px', borderRadius: '10px', outline: 'none' }} />
-          </div>
-
-          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-            <button style={btnGPSStyle} onClick={iniciarRota}>
-              <FaRoute size={18} /> Abrir Rota no GPS
-            </button>
-            <button style={btnConfirmStyle} onClick={handleValidarEntrega}>
-              Confirmar Entrega
-            </button>
+    <div className="entregador-wrapper">
+      
+      {modal.isOpen && (
+        <div className="modal-overlay-custom">
+          <div className="modal-conteudo-custom">
+            <h3>{modal.titulo}</h3>
+            <p>{modal.mensagem}</p>
+            <div className="modal-botoes">
+              <button onClick={fecharModal} className="btn-modal-cancelar">Cancelar</button>
+              <button onClick={modal.acaoConfirmar} className="btn-modal-confirmar">Sim, Confirmar</button>
+            </div>
           </div>
         </div>
-      ) : (
-        <p style={{ textAlign: 'center', marginTop: '30px', fontSize: '1.2rem', color: '#888' }}>
-          Nenhuma entrega pendente no momento.
-        </p>
       )}
+
+      <header className="perfil-card-profissional">
+        {/* A foto agora usa a variável reativa que atualiza junto com o Firebase */}
+        {fotoPerfil ? ( 
+          <img src={fotoPerfil} className="foto-perfil-circle" alt="Entregador" referrerPolicy="no-referrer" />
+        ) : ( 
+          <FaUserCircle size={100} color="#333" className="icon-perfil-placeholder" /> 
+        )}
+        <div className="perfil-info-profissional">
+            <h2 className="entregador-nome">{dadosUsuario?.nome || 'Entregador'}</h2>
+            <div className="stats-rapidos-profissional">
+                <div className="stat-item"><FaMotorcycle /> <span>{minhaBag.length} na Mochila</span></div>
+                <div className="stat-item"><FaBoxOpen /> <span>{pedidosDisponiveis.length} Disponíveis</span></div>
+            </div>
+        </div>
+      </header>
+
+      <div className="secao-profissional">
+          <h3 className="titulo-secao secao-bag">
+            <FaTruckLoading /> A Minha Mochila de Entregas ({minhaBag.length})
+          </h3>
+          
+          {minhaBag.length === 0 ? (
+            <div className="empty-state-profissional"><FaInfoCircle /> Sua mochila está vazia no momento. Recolha novos pedidos abaixo.</div>
+          ) : (
+            <div className="grid-bag-profissional">
+                {minhaBag.map(pedido => (
+                  <div key={pedido.docId} className="card-entrega-profissional card-em-rota">
+                    <div className="header-entrega-profissional">
+                      <span className="info-id-pedido"><FaListOl /> ID Pedido: #{pedido.idPedido || pedido.docId.slice(0,6)}</span>
+                      
+                      <div className="botoes-card-profissional">
+                        <button onClick={() => devolverPedido(pedido)} className="btn-acao-card btn-amarelo">
+                          <FaUndo /> Devolver
+                        </button>
+                        <button onClick={() => abrirGPS(pedido)} className="btn-acao-card btn-azul">
+                          <FaRoute /> Rota GPS
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="info-endereco-profissional">
+                      <FaMapMarkerAlt className="icon-mapa-vermelho" />
+                      <div style={{width: '100%'}}>
+                          <p className="texto-endereco">
+                             Rua: {pedido.enderecoEntrega?.rua}, {pedido.enderecoEntrega?.numero}
+                          </p>
+                          <p className="texto-unidades">Bairro: {obterBairro(pedido)}</p>
+                          
+                          <button onClick={() => toggleItens(pedido.docId)} className="btn-ver-mais-itens">
+                            {itensExpandidos[pedido.docId] ? <FaChevronUp /> : <FaChevronDown />}
+                            {itensExpandidos[pedido.docId] ? 'Ocultar Itens' : `Ver Resumo (${calcularTotalItens(pedido.itens)} unidades)`}
+                          </button>
+
+                          {itensExpandidos[pedido.docId] && (
+                            <ul className="lista-itens-oculta">
+                              {pedido.itens?.map((item, index) => (
+                                <li key={index}><b>{item.quantidade || item.qtd}x</b> {item.nome}</li>
+                              ))}
+                            </ul>
+                          )}
+                      </div>
+                    </div>
+
+                    <div className="box-otp-profissional">
+                      <div className="input-group-validacao">
+                        <FaShieldAlt className="icon-seguranca" />
+                        <input 
+                          type="text" 
+                          className="input-otp-moderno" 
+                          maxLength="4" 
+                          placeholder="CODE"
+                          value={codigosValidacao[pedido.docId] || ''}
+                          onChange={(e) => setCodigosValidacao({...codigosValidacao, [pedido.docId]: e.target.value.replace(/\D/g, '')})}
+                        />
+                      </div>
+                      <button onClick={() => finalizarEntrega(pedido)} className="btn-confirmar-moderno">
+                        <FaCheck /> Confirmar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+      </div>
+
+      <div className="secao-profissional">
+          <h3 className="titulo-secao secao-vitrine">
+            <FaBoxOpen /> Disponíveis para Recolha ({pedidosDisponiveis.length})
+          </h3>
+          
+          {pedidosDisponiveis.length === 0 ? (
+            <div className="empty-state-profissional">A equipe da adega está preparando novos pedidos. Aguarde...</div>
+          ) : (
+            <div className="grid-vitrine-profissional">
+                {pedidosDisponiveis.map(pedido => (
+                  <div key={pedido.docId} className="card-entrega-profissional card-disponivel">
+                    <div className="header-vitrine-profissional">
+                        <div>
+                            <p className="texto-id-vitrine">ID #{pedido.idPedido || pedido.docId.slice(0,6)}</p>
+                            <p className="texto-bairro-vitrine">Bairro: {obterBairro(pedido)}</p>
+                            <p className="texto-endereco-vitrine">{pedido.enderecoEntrega?.rua}, {pedido.enderecoEntrega?.numero}</p>
+                            <p className="texto-unidades-vitrine">{calcularTotalItens(pedido.itens)} unidade(s) no total</p>
+                        </div>
+                        <button onClick={() => pegarPedido(pedido)} className="btn-confirmar-moderno btn-verde" style={{width: 'auto', padding: '12px 25px', height: 'auto'}}>
+                           Recolher
+                        </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+      </div>
+
     </div>
   );
 };
