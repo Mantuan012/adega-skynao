@@ -6,35 +6,37 @@
   margin: 0 auto; 
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #050505; /* Fundo preto base */
+  color: #ffffff;
 }
 
 .perfil-card-profissional {
-  background: rgba(20, 20, 20, 0.6); 
+  background: rgba(15, 15, 15, 0.8); 
   backdrop-filter: blur(12px); 
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 255, 102, 0.2); 
+  border: 1px solid rgba(27, 94, 32, 0.4); /* Verde escuro */
   border-radius: 16px; 
   padding: 30px;
   display: flex; 
   align-items: center; 
   gap: 25px; 
   margin-bottom: 40px; 
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
 }
 
-.foto-perfil-circle {
-  width: 100px; 
-  height: 100px; 
-  border-radius: 50%; 
-  object-fit: cover;
-  border: 3px solid #00ff66; 
-  box-shadow: 0 0 20px rgba(0, 255, 102, 0.3);
+/* Centraliza o conteúdo do cabeçalho */
+.perfil-card-profissional.centralizado {
+  justify-content: center;
+  text-align: center;
+  gap: 15px;
 }
 
-.icon-perfil-placeholder { 
-  background: #111; 
-  border-radius: 50%; 
-  border: 2px solid #333; 
+.perfil-card-profissional.centralizado .perfil-info-profissional {
+  align-items: center;
+}
+
+.perfil-card-profissional.centralizado .stats-rapidos-profissional {
+  justify-content: center;
 }
 
 .perfil-info-profissional { 
@@ -44,10 +46,10 @@
 }
 
 .entregador-nome { 
-  color: #fff; 
+  color: #ffffff; 
   font-size: 2rem; 
   margin: 0; 
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
 }
 
 .stats-rapidos-profissional { 
@@ -60,16 +62,16 @@
   display: flex; 
   align-items: center; 
   gap: 8px; 
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(27, 94, 32, 0.15); /* Fundo sutil verde escuro */
   padding: 8px 15px; 
   border-radius: 20px; 
-  color: #ccc; 
+  color: #e0e0e0; 
   font-weight: bold; 
   font-size: 0.95rem; 
-  border: 1px solid #333;
+  border: 1px solid #1b5e20;
 }
 
-.stat-item svg { color: #00ff66; }
+.stat-item svg { color: #4caf50; } /* Verde um pouco mais visível para o ícone */
 
 /* =========================================
    SEÇÕES E GRID
@@ -83,17 +85,18 @@
   font-size: 1.4rem; 
   padding-bottom: 12px; 
   margin-bottom: 25px; 
-  border-bottom: 2px solid rgba(255,255,255,0.05);
+  border-bottom: 2px solid rgba(255,255,255,0.1);
+  color: #ffffff;
 }
 
-.secao-bag { color: #ffaa00; border-bottom-color: rgba(255, 170, 0, 0.2); }
-.secao-vitrine { color: #00ff66; border-bottom-color: rgba(0, 255, 102, 0.2); }
+.secao-bag { border-bottom-color: rgba(255, 255, 255, 0.2); }
+.secao-vitrine { border-bottom-color: rgba(27, 94, 32, 0.5); }
 
 .empty-state-profissional {
   text-align: center; 
   padding: 40px 20px; 
-  background: rgba(0,0,0,0.3); 
-  border: 1px dashed #444; 
+  background: rgba(10, 10, 10, 0.6); 
+  border: 1px dashed #333; 
   border-radius: 12px;
   color: #888; 
   font-style: italic; 
@@ -113,8 +116,8 @@
    CARTÕES DE PEDIDO
 ========================================= */
 .card-entrega-profissional {
-  background: rgba(25, 25, 25, 0.8); 
-  border: 1px solid #333; 
+  background: #0f0f0f; 
+  border: 1px solid #222; 
   border-radius: 12px; 
   padding: 25px;
   transition: transform 0.3s ease, box-shadow 0.3s ease; 
@@ -125,11 +128,12 @@
 
 .card-entrega-profissional:hover { 
   transform: translateY(-4px); 
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+  box-shadow: 0 10px 25px rgba(0,0,0,0.7); 
+  border-color: #1b5e20;
 }
 
-.card-em-rota { border-left: 5px solid #ffaa00; }
-.card-disponivel { border-left: 5px solid #00ff66; }
+.card-em-rota { border-left: 5px solid #ffffff; }
+.card-disponivel { border-left: 5px solid #1b5e20; } /* Verde Escuro */
 
 .header-entrega-profissional, .header-vitrine-profissional {
   display: flex; 
@@ -142,7 +146,7 @@
 }
 
 .info-id-pedido { 
-  color: #aaa; 
+  color: #cccccc; 
   font-weight: bold; 
   font-size: 1.1rem; 
   display: flex; 
@@ -155,26 +159,27 @@
   display: flex; 
   align-items: flex-start; 
   gap: 15px; 
-  background: rgba(0,0,0,0.4); 
+  background: #080808; 
   padding: 15px; 
   border-radius: 8px; 
+  border: 1px solid #1a1a1a;
 }
 
 .icon-mapa-vermelho { 
-  color: #ff4444; 
+  color: #ffffff; /* Ajustado para branco para manter a paleta */
   font-size: 1.5rem; 
   margin-top: 2px; 
 }
 
 .texto-endereco { 
-  color: #fff; 
+  color: #ffffff; 
   font-size: 1.2rem; 
   font-weight: 600; 
   margin: 0 0 5px 0; 
 }
 
 .texto-unidades { 
-  color: #888; 
+  color: #aaaaaa; 
   margin: 0; 
   font-size: 0.95rem; 
 }
@@ -182,7 +187,7 @@
 .btn-ver-mais-itens {
   background: transparent; 
   border: none; 
-  color: #00ff66; 
+  color: #4caf50; 
   cursor: pointer; 
   padding: 5px 0; 
   font-size: 0.95rem; 
@@ -194,22 +199,22 @@
   transition: color 0.2s;
 }
 
-.btn-ver-mais-itens:hover { color: #fff; }
+.btn-ver-mais-itens:hover { color: #ffffff; }
 
 .lista-itens-oculta { 
-  background: rgba(0,0,0,0.5); 
+  background: #050505; 
   padding: 15px; 
   border-radius: 8px; 
   margin-top: 10px; 
   list-style: none; 
-  border: 1px solid #333; 
+  border: 1px solid #222; 
   animation: fadeIn 0.3s ease-in-out; 
 }
 
 .lista-itens-oculta li { 
-  color: #ccc; 
+  color: #dddddd; 
   padding: 8px 0; 
-  border-bottom: 1px dashed #444; 
+  border-bottom: 1px dashed #333; 
   font-size: 0.95rem; 
 }
 
@@ -221,10 +226,10 @@
 }
 
 /* Textos da Vitrine */
-.texto-id-vitrine { color: #888; font-weight: bold; margin: 0 0 5px 0; }
-.texto-bairro-vitrine { color: #00ff66; font-weight: bold; font-size: 1.1rem; margin: 0 0 5px 0; }
-.texto-endereco-vitrine { color: #ddd; margin: 0 0 5px 0; }
-.texto-unidades-vitrine { color: #888; margin: 0; font-size: 0.9rem; }
+.texto-id-vitrine { color: #888888; font-weight: bold; margin: 0 0 5px 0; }
+.texto-bairro-vitrine { color: #ffffff; font-weight: bold; font-size: 1.1rem; margin: 0 0 5px 0; }
+.texto-endereco-vitrine { color: #cccccc; margin: 0 0 5px 0; }
+.texto-unidades-vitrine { color: #888888; margin: 0; font-size: 0.9rem; }
 
 /* =========================================
    BOTÕES E OTP (VALIDAÇÃO)
@@ -244,15 +249,15 @@
   transition: all 0.2s; 
 }
 
-.btn-amarelo { color: #ffaa00; border-color: #ffaa00; }
-.btn-amarelo:hover { background: rgba(255, 170, 0, 0.1); }
+.btn-desfazer { color: #ffffff; border-color: #555555; background: #1a1a1a; }
+.btn-desfazer:hover { background: #333333; border-color: #ffffff; }
 
-.btn-azul { color: #4285F4; border-color: #4285F4; }
-.btn-azul:hover { background: rgba(66, 133, 244, 0.1); }
+.btn-rota { color: #ffffff; border-color: #1b5e20; background: rgba(27, 94, 32, 0.1); }
+.btn-rota:hover { background: #1b5e20; }
 
 .box-otp-profissional { 
-  background: #0a0a0a; 
-  border: 1px dashed #00ff66; 
+  background: #080808; 
+  border: 1px dashed #1b5e20; 
   border-radius: 10px; 
   padding: 20px; 
   display: flex; 
@@ -263,13 +268,13 @@
 }
 
 .input-group-validacao { display: flex; align-items: center; gap: 12px; }
-.icon-seguranca { color: #00ff66; font-size: 1.5rem; }
+.icon-seguranca { color: #ffffff; font-size: 1.5rem; }
 
 .input-otp-moderno { 
   width: 120px; 
-  background: #000; 
-  border: 2px solid #00ff66; 
-  color: #fff; 
+  background: #000000; 
+  border: 2px solid #1b5e20; 
+  color: #ffffff; 
   font-size: 1.6rem; 
   text-align: center; 
   letter-spacing: 5px; 
@@ -280,13 +285,13 @@
   transition: box-shadow 0.2s; 
 }
 
-.input-otp-moderno:focus { box-shadow: 0 0 12px rgba(0, 255, 102, 0.4); }
+.input-otp-moderno:focus { box-shadow: 0 0 12px rgba(27, 94, 32, 0.5); }
 
 .btn-confirmar-moderno { 
   flex-grow: 1; 
-  background: linear-gradient(135deg, #00ff66 0%, #00cc52 100%); 
-  color: #000; 
-  border: none; 
+  background: #1b5e20; 
+  color: #ffffff; 
+  border: 1px solid #2e7d32; 
   padding: 15px; 
   border-radius: 8px; 
   font-weight: bold; 
@@ -301,8 +306,9 @@
 }
 
 .btn-confirmar-moderno:hover { 
+  background: #2e7d32; 
   transform: translateY(-2px); 
-  box-shadow: 0 5px 15px rgba(0, 255, 102, 0.3); 
+  box-shadow: 0 5px 15px rgba(27, 94, 32, 0.4); 
 }
 
 /* =========================================
@@ -314,35 +320,35 @@
   left: 0; 
   right: 0; 
   bottom: 0; 
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.9);
   display: flex; 
   align-items: center; 
   justify-content: center; 
   z-index: 10000; 
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
 }
 
 .modal-conteudo-custom {
-  background-color: #111; 
+  background-color: #0f0f0f; 
   padding: 30px; 
   border-radius: 12px; 
-  border: 1px solid #333; 
-  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  border: 1px solid #1b5e20; 
+  box-shadow: 0 10px 40px rgba(0,0,0,0.9);
   text-align: center; 
   max-width: 400px; 
   width: 90%; 
   animation: fadeInModal 0.2s ease-out;
 }
 
-.modal-conteudo-custom h3 { color: #fff; margin-top: 0; font-size: 1.4rem; margin-bottom: 15px;}
-.modal-conteudo-custom p { color: #aaa; margin-bottom: 25px; line-height: 1.5;}
+.modal-conteudo-custom h3 { color: #ffffff; margin-top: 0; font-size: 1.4rem; margin-bottom: 15px;}
+.modal-conteudo-custom p { color: #cccccc; margin-bottom: 25px; line-height: 1.5;}
 
 .modal-botoes { display: flex; gap: 15px; justify-content: center; }
 
 .btn-modal-cancelar { 
-  background: transparent; 
-  border: 1px solid #666; 
-  color: #ccc; 
+  background: #1a1a1a; 
+  border: 1px solid #444; 
+  color: #ffffff; 
   padding: 12px 20px; 
   border-radius: 8px; 
   font-weight: bold; 
@@ -351,12 +357,12 @@
   transition: all 0.2s;
 }
 
-.btn-modal-cancelar:hover { background: #333; color: #fff;}
+.btn-modal-cancelar:hover { background: #333333; }
 
 .btn-modal-confirmar { 
-  background: #00ff66; 
+  background: #ffffff; 
   border: none; 
-  color: #000; 
+  color: #000000; 
   padding: 12px 20px; 
   border-radius: 8px; 
   font-weight: bold; 
@@ -366,11 +372,104 @@
 }
 
 .btn-modal-confirmar:hover { 
-  background: #00cc52; 
-  box-shadow: 0 0 15px rgba(0,255,102,0.4);
+  background: #e0e0e0; 
+  box-shadow: 0 0 15px rgba(255,255,255,0.2);
 }
 
 @keyframes fadeInModal { 
   from { transform: scale(0.95); opacity: 0; } 
   to { transform: scale(1); opacity: 1; } 
+}
+
+/* =========================================
+   RESPONSIVIDADE MOBILE PREMIUM - ENTREGADOR
+========================================= */
+@media (max-width: 768px) {
+  .entregador-wrapper {
+    padding: 10px;
+  }
+
+  /* Cabeçalho do Entregador */
+  .perfil-card-profissional {
+    flex-direction: column;
+    padding: 20px 15px;
+    text-align: center;
+    gap: 15px;
+    border-radius: 12px;
+  }
+
+  .stats-rapidos-profissional {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .stat-item {
+    flex: 1;
+    min-width: 130px;
+    justify-content: center;
+    font-size: 0.9rem;
+    padding: 10px;
+  }
+
+  /* Área dos Pedidos */
+  .grid-vitrine-profissional {
+    grid-template-columns: 1fr; /* Força 1 coluna para os cartões ficarem largos */
+    gap: 15px;
+  }
+
+  .card-entrega-profissional {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .header-vitrine-profissional {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    width: 100%;
+  }
+
+  .header-vitrine-profissional > div {
+    width: 100%;
+  }
+
+  .texto-endereco-vitrine {
+    font-size: 1.1rem;
+    line-height: 1.4;
+    color: #fff;
+  }
+
+  .info-endereco-profissional {
+    padding: 15px;
+    margin: 15px 0;
+    background: #111;
+    border-radius: 8px;
+    border-left: 4px solid #00ff66;
+  }
+
+  /* =========================================
+     BOTÕES GIGANTES (TOUCH TARGETS)
+  ========================================= */
+  .botoes-card-profissional {
+    flex-direction: column; /* Empilha os botões */
+    width: 100%;
+    gap: 12px;
+    margin-top: 15px;
+  }
+
+  /* O !important garante que o mobile vença qualquer estilo inline do JS */
+  .btn-acao-card,
+  .btn-confirmar-moderno {
+    width: 100% !important; 
+    height: 55px !important;
+    font-size: 1.1rem !important;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 !important;
+    margin: 0;
+  }
 }

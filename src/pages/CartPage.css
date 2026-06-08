@@ -1,12 +1,346 @@
-/* src/pages/CartPage.css */
-.lista-carrinho { list-style: none; padding-left: 0; }
-.lista-carrinho li { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333; flex-wrap: wrap; gap: 10px; }
-.lista-carrinho li > span:first-child { font-weight: 600; flex-grow: 1; }
-.controles-quantidade { display: flex; align-items: center; gap: 10px; justify-content: center; }
-.botao-quantidade { background-color: var(--cor-primaria-final); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.3rem; font-weight: bold; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
-.botao-quantidade:hover { background-color: var(--cor-primaria-hover); }
-.quantidade { font-size: 1.1rem; font-weight: bold; min-width: 20px; text-align: center; }
-.subtotal-item { font-weight: bold; color: #00ff66; font-size: 1.1rem; min-width: 80px; text-align: right; }
-.aviso-pagamento { display: flex; align-items: center; gap: 12px; background-color: rgba(0, 122, 51, 0.15); border: 1px solid var(--cor-primaria-final); border-radius: var(--radius-padrao); padding: 12px 15px; margin-top: 20px; }
-.aviso-pagamento-icone { color: var(--cor-primaria-hover); font-size: 1.5rem; flex-shrink: 0; }
-.aviso-pagamento p { color: #a0ffa0; margin: 0; font-size: 0.95rem; line-height: 1.4; }
+/* =========================================
+   ESTILOS BASE E LISTA DE ITENS
+========================================= */
+.lista-carrinho {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item-carrinho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #333;
+  padding: 20px 0;
+  gap: 15px;
+}
+
+.info-produto-carrinho {
+  flex: 1;
+  min-width: 150px;
+}
+
+.nome-produto-carrinho {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 0 0 5px 0;
+}
+
+/* =========================================
+   CONTROLES DE QUANTIDADE E PREÇO
+========================================= */
+.controles-e-preco {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.controles-quantidade {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1a1a1a;
+  padding: 6px 12px;
+  border-radius: 30px;
+  border: 1px solid #333;
+}
+
+.botao-quantidade {
+  background: #222;
+  color: #00ff66;
+  border: 1px solid #00ff66;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.botao-quantidade:hover:not(:disabled) {
+  background: #00ff66;
+  color: #000;
+  transform: scale(1.1);
+}
+
+.botao-quantidade:disabled {
+  border-color: #555;
+  color: #555;
+  cursor: not-allowed;
+}
+
+.quantidade-numero {
+  color: #fff;
+  font-weight: bold;
+  min-width: 24px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.preco-carrinho {
+  color: #00ff66;
+  font-weight: bold;
+  font-size: 1.2rem;
+  min-width: 90px;
+  text-align: right;
+}
+
+.btn-remover-item {
+  padding: 8px;
+  background: transparent;
+  color: #ff4444;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remover-item:hover {
+  transform: scale(1.15) rotate(5deg);
+}
+
+/* =========================================
+   RESUMO E CHECKOUT
+========================================= */
+.resumo-pedido-box {
+  margin-top: 30px;
+  padding: 25px;
+  background-color: #111;
+  border-radius: 12px;
+  border: 1px solid #333;
+  border-left: 4px solid #00ff66;
+}
+
+.resumo-linha {
+  display: flex;
+  justify-content: space-between;
+  color: #ccc;
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+}
+
+.resumo-linha strong {
+  color: #fff;
+}
+
+.resumo-total {
+  display: flex;
+  justify-content: space-between;
+  color: #fff;
+  border-top: 1px solid #333;
+  padding-top: 15px;
+  margin-top: 15px;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.resumo-total span {
+  color: #00ff66;
+}
+
+.secao-checkout {
+  margin-top: 30px;
+}
+
+.titulo-checkout {
+  color: #00ff66;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 1.05rem;
+}
+
+.endereco-padrao-info {
+  margin-left: 28px;
+  color: #ccc;
+  background: #1a1a1a;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.endereco-padrao-erro {
+  margin-left: 28px;
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid #ff4444;
+}
+
+.form-endereco-alternativo {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 20px;
+  background: #111;
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+.input-checkout {
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.input-checkout:focus {
+  border-color: #00ff66;
+  box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+}
+
+.input-checkout:disabled {
+  background: #222;
+  color: #888;
+  cursor: not-allowed;
+  border-color: #333;
+}
+
+.aviso-pagamento {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: rgba(0, 255, 102, 0.1);
+  border: 1px dashed #00ff66;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.aviso-pagamento p {
+  color: #00ff66;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+.botoes-checkout {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.botoes-checkout .botao {
+  flex: 1;
+  padding: 18px;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-continuar-comprando {
+  background: #1a1a1a !important;
+  border: 1px solid #444 !important;
+  color: #fff !important;
+  background-image: none !important;
+}
+
+.btn-continuar-comprando:hover {
+  background: #333 !important;
+  border-color: #666 !important;
+}
+
+/* =========================================
+   RESPONSIVIDADE MOBILE PREMIUM (APP VIEW)
+========================================= */
+@media (max-width: 768px) {
+  .item-carrinho {
+    flex-direction: column;
+    align-items: flex-start;
+    background: #111;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid #222;
+    margin-bottom: 15px;
+    gap: 15px;
+  }
+
+  .info-produto-carrinho {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .nome-produto-carrinho {
+    font-size: 1.05rem;
+    max-width: 85%;
+  }
+
+  .btn-remover-item {
+    padding: 0;
+    margin-top: -2px;
+  }
+
+  .controles-e-preco {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .controles-quantidade {
+    padding: 8px 12px;
+  }
+
+  /* Botões maiores no celular para o toque do dedo */
+  .botao-quantidade {
+    width: 40px; 
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .quantidade-numero {
+    font-size: 1.2rem;
+    min-width: 30px;
+  }
+
+  .resumo-pedido-box {
+    padding: 20px 15px;
+    border-radius: 16px;
+  }
+
+  .botoes-checkout {
+    flex-direction: column-reverse; /* "Continuar Comprando" vai para baixo */
+    gap: 12px;
+  }
+
+  .botoes-checkout .botao {
+    width: 100%;
+    padding: 16px;
+  }
+}

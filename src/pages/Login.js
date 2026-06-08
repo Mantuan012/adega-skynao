@@ -14,10 +14,7 @@ export default function Login({ showToast }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // --- FUNÇÃO BLINDADA: LOGIN COM GOOGLE ---
   const handleGoogleLogin = async () => {
-    // Força o Google a pedir a seleção da conta.
-    // Isso "acorda" o Safari e evita que ele bloqueie o pop-up achando que é spam
     googleProvider.setCustomParameters({
       prompt: 'select_account'
     });
@@ -26,11 +23,9 @@ export default function Login({ showToast }) {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
-      // Verifica se o utilizador já existe no nosso Banco de Dados
       const userRef = doc(db, "usuarios", user.uid);
       const userSnap = await getDoc(userRef);
 
-      // Se não existe, é o primeiro login dele! Vamos criar o perfil:
       if (!userSnap.exists()) {
         await setDoc(userRef, {
           email: user.email,
@@ -47,7 +42,6 @@ export default function Login({ showToast }) {
       console.error("Erro no pop-up do Google:", error);
       
       if (error.code !== 'auth/popup-closed-by-user') {
-        // Tratamento especial para o erro do iPhone/WhatsApp
         if (error.code === 'auth/internal-error' || error.message.includes('missing initial state')) {
            showToast("Bloqueio da Apple detectado! Tente abrir o site direto no navegador Safari.", 'error');
         } else {
@@ -56,7 +50,6 @@ export default function Login({ showToast }) {
       }
     }
   };
-  // -------------------------------------
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -131,7 +124,6 @@ export default function Login({ showToast }) {
           </button>
         </form>
 
-        {/* --- DIVISÓRIA E BOTÃO DO GOOGLE --- */}
         <div className="divisor-login">
           <hr />
           <span>OU</span>
@@ -139,12 +131,11 @@ export default function Login({ showToast }) {
         </div>
 
         <button type="button" onClick={handleGoogleLogin} className="btn-google">
-          <FaGoogle style={{ marginRight: '10px', fontSize: '1.2rem' }} />
+          <FaGoogle className="btn-google-icon" />
           Continuar com o Google
         </button>
-        {/* ----------------------------------- */}
 
-        <p style={{ marginTop: '12px', color: '#00cc44', cursor: 'pointer', textAlign: 'center' }} onClick={() => setModoCadastro(!modoCadastro)}>
+        <p className="link-cadastro" onClick={() => setModoCadastro(!modoCadastro)}>
           {modoCadastro ? "Já tem uma conta? Faça login" : "Não tem conta? Cadastre-se"}
         </p>
       </div>

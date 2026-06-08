@@ -168,3 +168,57 @@
     opacity: 1;
   }
 }
+
+/* =========================================
+   RESPONSIVIDADE MOBILE - NAVBAR
+========================================= */
+@media (max-width: 768px) {
+  .header-logo {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .header-logo img { width: 50px; height: 50px; }
+  .header-logo h1 { font-size: 1.6rem; }
+  .slogan { display: none; } /* Deixa o topo mais limpo no celular */
+
+  .top-bar {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .top-bar-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+
+  .top-bar-buttons .botao {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column; /* Ícone em cima, texto embaixo */
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 5px;
+    font-size: 0.85rem;
+    border-radius: 12px;
+  }
+
+  /* Faz o último botão ocupar as duas colunas se ficar sozinho na linha */
+  .top-bar-buttons .botao:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .top-bar-actions {
+    width: 100%;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: #111;
+    border-radius: 12px;
+    box-sizing: border-box;
+  }
+}

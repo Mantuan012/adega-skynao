@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './MenuPedidos.css'; 
-import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, orderBy, limit, startAfter, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, orderBy, limit, startAfter, getDocs, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import dayjs from 'dayjs'; 
 import { FaHistory, FaBolt, FaRoute, FaUndo } from 'react-icons/fa'; 
@@ -17,7 +17,6 @@ const MenuPedidos = ({ isDono, usuario }) => {
   const [resetTrigger, setResetTrigger] = useState(0);
   const [busca, setBusca] = useState('');
 
-  // Estado do Modal Customizado
   const [modal, setModal] = useState({ isOpen: false, titulo: '', mensagem: '', tipo: 'sucesso', acaoConfirmar: null });
 
   const limiteItens = 10; 
@@ -63,7 +62,6 @@ const MenuPedidos = ({ isDono, usuario }) => {
     return () => unsubscribe();
   }, [usuario, isDono, modoHistoricoAdmin, limiteItens, resetTrigger]); 
 
-  // Funções de Controle do Modal
   const abrirModal = (titulo, mensagem, tipo, acao) => {
     setModal({ isOpen: true, titulo, mensagem, tipo, acaoConfirmar: acao });
   };
@@ -124,35 +122,75 @@ const MenuPedidos = ({ isDono, usuario }) => {
     }
   };
 
-  // Lógicas Extraídas para Usar o Modal Customizado
-  const handleDespachar = (pedidoId) => {
-    abrirModal('Despachar Pedido', `Confirma que o pedido #${pedidoId} está separado e pronto para retirada do entregador?`, 'sucesso', () => {
-      atualizarStatus(pedidoId, 'Pronto');
+  const handleDespachar = (pedido) => {
+    abrirModal('Despachar Pedido', `Confirma que o pedido #${pedido.idPedido || pedido.id} está separado e pronto para retirada do entregador?`, 'sucesso', () => {
+      atualizarStatus(pedido.id, 'Pronto');
       fecharModal();
     });
   };
 
-  const handleDesfazer = (pedidoId) => {
-    abrirModal('Desfazer Despacho', `O pedido #${pedidoId} voltará para "Em Preparo". Deseja continuar?`, 'sucesso', () => {
-      atualizarStatus(pedidoId, 'Em Preparo');
+  const handleDesfazer = (pedido) => {
+    abrirModal('Desfazer Despacho', `O pedido #${pedido.idPedido || pedido.id} voltará para "Em Preparo". Deseja continuar?`, 'sucesso', () => {
+      atualizarStatus(pedido.id, 'Em Preparo');
       fecharModal();
     });
   };
 
-  const handleBaixaManual = (pedidoId) => {
-    abrirModal('Baixa Manual', `Atenção: Deseja forçar a baixa do pedido #${pedidoId} como "Entregue" manualmente sem o código do cliente?`, 'perigo', () => {
-      atualizarStatus(pedidoId, 'Entregue');
+  const handleDesfazerDespacho = (pedido) => {
+    abrirModal(
+      'Desfazer Saída',
+      `O pedido #${pedido.idPedido || pedido.id} será removido da rota do entregador ${pedido.nomeEntregador || ''} e voltará para a bancada como "Pronto". Continuar?`,
+      'sucesso',
+      async () => {
+        try {
+          await updateDoc(doc(db, "pedidos", pedido.id), {
+            status: 'Pronto',
+            entregadorId: null,
+            nomeEntregador: null,
+          });
+          fecharModal();
+        } catch (error) {
+          console.error("Erro ao desfazer despacho:", error);
+          fecharModal();
+        }
+      }
+    );
+  };
+
+  const handleBaixaManual = (pedido) => {
+    abrirModal('Baixa Manual', `Atenção: Deseja forçar a baixa do pedido #${pedido.idPedido || pedido.id} como "Entregue" manualmente sem o código do cliente?`, 'perigo', () => {
+      atualizarStatus(pedido.id, 'Entregue');
       fecharModal();
     });
   };
 
-  const excluirPedido = (pedidoId) => {
-    abrirModal('Excluir Pedido', `Ação irreversível! Deseja apagar o pedido #${pedidoId} permanentemente do sistema?`, 'perigo', async () => {
+  const excluirPedido = (pedido) => {
+    abrirModal('Excluir Pedido', `Ação irreversível! Deseja apagar o pedido #${pedido.idPedido || pedido.id} permanentemente e devolver os itens ao estoque?`, 'perigo', async () => {
       try {
-        await deleteDoc(doc(db, "pedidos", pedidoId));
+        if (pedido.itens && pedido.itens.length > 0) {
+          for (const item of pedido.itens) {
+            if (item.tipo === 'combo') {
+              for (const i of item.itens) {
+                const prodRef = doc(db, "produtos", String(i.id));
+                const snap = await getDoc(prodRef);
+                if (snap.exists()) {
+                  await updateDoc(prodRef, { estoque: snap.data().estoque + (i.qtd * item.quantidade) });
+                }
+              }
+            } else {
+              const prodRef = doc(db, "produtos", String(item.id));
+              const snap = await getDoc(prodRef);
+              if (snap.exists()) {
+                await updateDoc(prodRef, { estoque: snap.data().estoque + item.quantidade });
+              }
+            }
+          }
+        }
+        
+        await deleteDoc(doc(db, "pedidos", pedido.id));
         fecharModal();
       } catch (error) {
-        console.error("Erro ao excluir pedido:", error);
+        console.error("Erro ao excluir pedido e devolver estoque:", error);
         fecharModal();
       }
     });
@@ -161,11 +199,11 @@ const MenuPedidos = ({ isDono, usuario }) => {
   const iniciarRota = (pedido) => {
     if (pedido.coordenadas?.latitude && pedido.coordenadas?.longitude) {
       const { latitude, longitude } = pedido.coordenadas;
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`, '_blank');
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=$${latitude},${longitude}&travelmode=driving`, '_blank');
     } else if (pedido.enderecoEntrega) {
       const { rua, numero } = pedido.enderecoEntrega;
       const destino = `${rua}, ${numero}, Pontal - SP`;
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destino)}&travelmode=driving`, '_blank');
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=$${encodeURIComponent(destino)}&travelmode=driving`, '_blank');
     } else {
       alert("Dados de endereço insuficientes para traçar rota.");
     }
@@ -173,15 +211,23 @@ const MenuPedidos = ({ isDono, usuario }) => {
 
   const pedidosFiltrados = pedidos.filter(p => {
     let passaStatus = false;
-    if (filtroStatus === 'Todos') passaStatus = true;
-    else if (filtroStatus === 'Pendentes') passaStatus = p.status !== 'Entregue' && p.status !== 'Cancelado';
-    else passaStatus = p.status === filtroStatus;
+    if (filtroStatus === 'Todos') {
+        passaStatus = true;
+    } else if (filtroStatus === 'Pendentes') {
+        passaStatus = p.status !== 'Entregue' && p.status !== 'Cancelado';
+    } else {
+        passaStatus = p.status === filtroStatus;
+    }
 
     let passaBusca = true;
     if (busca.trim() !== '') {
       const termo = busca.toLowerCase();
-      const matchId = String(p.idPedido).includes(termo);
-      const matchNome = p.enderecoEntrega?.nome?.toLowerCase().includes(termo);
+      const idString = p.idPedido ? String(p.idPedido).toLowerCase() : String(p.id).toLowerCase();
+      const nomeString = p.enderecoEntrega?.nome ? String(p.enderecoEntrega.nome).toLowerCase() : '';
+      
+      const matchId = idString.includes(termo);
+      const matchNome = nomeString.includes(termo);
+      
       passaBusca = matchId || matchNome;
     }
 
@@ -191,7 +237,6 @@ const MenuPedidos = ({ isDono, usuario }) => {
   return (
     <div className="menu-pedidos-wrapper">
       
-      {/* Modal Customizado Renderizado no Topo */}
       {modal.isOpen && (
         <div className="modal-overlay-custom">
           <div className={`modal-conteudo-custom ${modal.tipo === 'perigo' ? 'modal-conteudo-custom-danger' : ''}`}>
@@ -262,7 +307,7 @@ const MenuPedidos = ({ isDono, usuario }) => {
           {pedidosFiltrados.map((pedido) => (
             <div key={pedido.id} className="cartao card-pedido-item">
               <p className="texto-id">
-                <b className="destaque-verde">ID:</b> #{pedido.idPedido}
+                <b className="destaque-verde">ID:</b> #{pedido.idPedido || pedido.id}
               </p>
               <p>
                 <b>Status:</b>{' '}
@@ -274,9 +319,9 @@ const MenuPedidos = ({ isDono, usuario }) => {
               <p><b>Data:</b> {dayjs(pedido.data).format("DD/MM/YYYY HH:mm")}</p>
               
               <div className="box-endereco">
-                <p><b>Entrega para:</b> {pedido.enderecoEntrega?.nome}</p>
+                <p><b>Entrega para:</b> {pedido.enderecoEntrega?.nome || 'Nome não informado'}</p>
                 <p><b>Bairro:</b> {pedido.enderecoEntrega?.bairro || 'Não informado'}</p>
-                <p><b>Endereço:</b> {pedido.enderecoEntrega?.rua}, {pedido.enderecoEntrega?.numero}</p>
+                <p><b>Endereço:</b> {pedido.enderecoEntrega?.rua}, {pedido.enderecoEntrega?.numero} {pedido.enderecoEntrega?.complemento ? ` - ${pedido.enderecoEntrega.complemento}` : ''}</p>
               </div>
 
               <h3 className="total-pedido">
@@ -294,13 +339,13 @@ const MenuPedidos = ({ isDono, usuario }) => {
               {isDono && (
                 <div className="botoes-acao-admin">
                   {pedido.status === 'Em Preparo' && (
-                    <button onClick={() => handleDespachar(pedido.id)} className="btn-acao-admin btn-entregar">
+                    <button onClick={() => handleDespachar(pedido)} className="btn-acao-admin btn-entregar">
                       Despachar
                     </button>
                   )}
                   
                   {pedido.status === 'Pronto' && (
-                    <button onClick={() => handleDesfazer(pedido.id)} className="btn-acao-admin btn-laranja">
+                    <button onClick={() => handleDesfazer(pedido)} className="btn-acao-admin btn-laranja">
                       <FaUndo /> Desfazer Despacho
                     </button>
                   )}
@@ -310,12 +355,15 @@ const MenuPedidos = ({ isDono, usuario }) => {
                       <button onClick={() => iniciarRota(pedido)} className="btn-acao-admin btn-rota">
                         <FaRoute size={16} /> Abrir Rota no GPS
                       </button>
-                      <button onClick={() => handleBaixaManual(pedido.id)} className="btn-acao-admin btn-entregar">
+                      <button onClick={() => handleDesfazerDespacho(pedido)} className="btn-acao-admin btn-desfazer-saida">
+                        <FaUndo /> Desfazer Saída
+                      </button>
+                      <button onClick={() => handleBaixaManual(pedido)} className="btn-acao-admin btn-entregar">
                         Confirmar Entrega
                       </button>
                     </>
                   )}
-                  <button onClick={() => excluirPedido(pedido.id)} className="btn-acao-admin btn-excluir">
+                  <button onClick={() => excluirPedido(pedido)} className="btn-acao-admin btn-excluir">
                     Excluir
                   </button>
                 </div>

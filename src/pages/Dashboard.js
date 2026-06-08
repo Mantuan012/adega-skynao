@@ -1,16 +1,15 @@
 import React, { useEffect, useState, useRef } from "react";
-import {collection, getDocs, doc, getDoc, query, where, orderBy} from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query, orderBy } from "firebase/firestore"; 
 import { db, auth } from "../firebase/firebaseConfig";
-import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell} from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import dayjs from "dayjs";
-import {FaChartBar, FaChartLine, FaChartPie, FaFilePdf, FaSpinner, FaBan} from "react-icons/fa";
+import { FaChartBar, FaChartLine, FaChartPie, FaFilePdf, FaSpinner, FaBan } from "react-icons/fa";
 import { gerarRelatorioPremium } from "../utils/geradorPDF";
 import './Dashboard.css'; 
 
 export default function Dashboard({ fechar }) {
   const usuario = auth.currentUser;
   
-  // Estados de Controle
   const [isDono, setIsDono] = useState(null); 
   const [pedidos, setPedidos] = useState([]);
   const [faturamento, setFaturamento] = useState(0);
@@ -19,11 +18,9 @@ export default function Dashboard({ fechar }) {
   const [dadosPagamento, setDadosPagamento] = useState([]);
   const [filtro, setFiltro] = useState("todos");
 
-  // Referências para o PDF
   const lineChartRef = useRef();
   const pieChartRef = useRef();
 
-  // Carregamento Inicial e Verificação de Permissão
   useEffect(() => {
     const carregarDados = async () => {
       if (!usuario) return setIsDono(false);
@@ -34,11 +31,9 @@ export default function Dashboard({ fechar }) {
         if (userDoc.exists() && userDoc.data().tipo === "admin") {
           setIsDono(true);
           
-          // Otimização: Puxa apenas pedidos dos últimos 30 dias para economizar recursos
-          const limiteData = dayjs().subtract(30, "day").toISOString();
+          // Removida a trava de 30 dias para permitir o relatório anual completo
           const q = query(
             collection(db, "pedidos"),
-            where("data", ">=", limiteData),
             orderBy("data", "desc")
           );
           
@@ -56,7 +51,6 @@ export default function Dashboard({ fechar }) {
     carregarDados();
   }, [usuario]);
 
-  // Lógica de Filtros e Gráficos
   useEffect(() => {
     const aplicarFiltro = () => {
       const agora = dayjs();
@@ -68,16 +62,17 @@ export default function Dashboard({ fechar }) {
         filtrados = filtrados.filter((p) => dayjs(p.data).isAfter(agora.subtract(7, "day")));
       } else if (filtro === "mes") {
         filtrados = filtrados.filter((p) => dayjs(p.data).isSame(agora, "month"));
+      } else if (filtro === "ano") {
+        // Lógica do Filtro Anual adicionada
+        filtrados = filtrados.filter((p) => dayjs(p.data).isSame(agora, "year"));
       }
 
-      // Cálculos Totais
       setFaturamento(filtrados.reduce((acc, p) => acc + (p.total || 0), 0));
       setQuantidade(filtrados.length);
 
-      // Agrupamento para Gráfico de Linha
       const agrupamento = {};
       filtrados.forEach((p) => {
-        const dia = new Date(p.data).toLocaleDateString("pt-BR");
+        const dia = dayjs(p.data).format("DD/MM/YYYY");
         if (!agrupamento[dia]) agrupamento[dia] = { dia, faturamento: 0, pedidos: 0 };
         agrupamento[dia].faturamento += p.total || 0;
         agrupamento[dia].pedidos += 1;
@@ -88,9 +83,15 @@ export default function Dashboard({ fechar }) {
         const [diaB, mesB, anoB] = b.dia.split("/").map(Number);
         return new Date(anoA, mesA - 1, diaA) - new Date(anoB, mesB - 1, diaB);
       });
+
+      // Correção visual para o gráfico não bugar quando há apenas 1 dia de venda
+      if (dadosOrdenados.length === 1) {
+          dadosOrdenados.unshift({ dia: '', faturamento: 0, pedidos: 0 });
+          dadosOrdenados.push({ dia: ' ', faturamento: 0, pedidos: 0 });
+      }
+
       setDadosGrafico(dadosOrdenados);
 
-      // Agrupamento para Gráfico de Pizza
       const pgto = {};
       filtrados.forEach((p) => {
         const f = p.formaPagamento || "Outros";
@@ -108,7 +109,6 @@ export default function Dashboard({ fechar }) {
 
   const COLORS = ["#00ff66", "#8884d8", "#ffbb28", "#ff8042"];
 
-  // Telas de Carregamento e Erro
   if (isDono === null) return <div className="cartao"><h2 className="dash-title"><FaSpinner className="fa-spin" /> Carregando Painel...</h2></div>;
   if (isDono === false) return <div className="cartao"><h2 className="dash-title" style={{ color: '#ff4444' }}><FaBan /> Acesso Negado</h2><button onClick={fechar} className="botao botao-vermelho">Sair</button></div>;
 
@@ -119,10 +119,11 @@ export default function Dashboard({ fechar }) {
       <div className="dash-filtros">
         <label><b>Filtrar Período:</b> </label>
         <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="dash-select">
-          <option value="todos">Últimos 30 dias</option>
+          <option value="todos">Todos os Tempos</option>
           <option value="hoje">Hoje</option>
           <option value="7dias">Últimos 7 Dias</option>
           <option value="mes">Mês Atual</option>
+          <option value="ano">Ano Atual</option>
         </select>
       </div>
 
@@ -140,8 +141,8 @@ export default function Dashboard({ fechar }) {
             <YAxis stroke="#ccc" />
             <Tooltip contentStyle={{ backgroundColor: "#333", border: "none", color: "#fff" }} />
             <Legend />
-            <Line type="monotone" dataKey="faturamento" stroke="#00ff66" strokeWidth={3} name="R$" />
-            <Line type="monotone" dataKey="pedidos" stroke="#8884d8" strokeWidth={3} name="Qtd" />
+            <Line type="monotone" dataKey="faturamento" stroke="#00ff66" strokeWidth={3} name="R$" activeDot={{ r: 8 }} />
+            <Line type="monotone" dataKey="pedidos" stroke="#8884d8" strokeWidth={3} name="Qtd" activeDot={{ r: 8 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

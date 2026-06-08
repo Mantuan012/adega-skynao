@@ -20,6 +20,7 @@ import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import Toast from "./components/Toast";
 import UserInfo from "./components/UserInfo";
+import AlertaPedidos from "./components/AlertaPedidos"; // Importação do componente fantasma
 
 function App() {
   const [usuario, setUsuario] = useState(null);
@@ -33,10 +34,8 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // 1. FECHA A CORTINA: O usuário logou, mas ainda não sabemos o cargo
         setLoading(true); 
         
-        // 2. Busca o perfil no banco de dados
         const userRef = doc(db, "usuarios", user.uid);
         const userSnap = await getDoc(userRef);
         
@@ -44,13 +43,9 @@ function App() {
           setDadosUsuario(userSnap.data());
         }
         
-        // 3. Define o usuário no sistema
         setUsuario(user); 
-        
-        // 4. ABRE A CORTINA: Agora o React tem todas as informações juntas
         setLoading(false); 
       } else {
-        // Se deslogou, limpa tudo e libera a tela de Login
         setUsuario(null);
         setDadosUsuario(null);
         setLoading(false);
@@ -69,6 +64,10 @@ function App() {
     <CartProvider showToast={showToast}>
       <Router>
         <div className="container">
+          
+          {/* Componente Fantasma: Fica ouvindo os pedidos globalmente no fundo */}
+          <AlertaPedidos isDono={isDono} />
+
           {!usuario ? (
             <Login showToast={showToast} />
           ) : (

@@ -1,5 +1,3 @@
-/* src/pages/Login.css */
-
 .login-container {
   display: flex;
   justify-content: center;
@@ -16,6 +14,7 @@
   width: 100%;
   max-width: 400px;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .login-box img {
@@ -42,7 +41,7 @@
   left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--cor-primaria-final); 
+  color: #00ff66; 
   font-size: 0.9rem; 
 }
 
@@ -53,7 +52,8 @@
   transform: translateY(-50%);
   color: #888; 
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  padding: 5px; /* Facilita o clique no olhinho */
 }
 
 .password-toggle-icon:hover {
@@ -62,47 +62,47 @@
 
 .login-box input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 14px;
   padding-left: 45px; 
   padding-right: 45px; 
   background-color: #222;
   color: white;
-  border: 1px solid var(--cor-primaria-final);
+  border: 1px solid #00ff66;
   border-radius: 6px;
   box-sizing: border-box; 
   font-size: 1rem;
   transition: border-color 0.3s, box-shadow 0.3s;
+  outline: none;
 }
 
 .login-box input:focus {
-  outline: none;
-  border-color: var(--cor-primaria-hover);
+  border-color: #00cc52;
   box-shadow: 0 0 8px rgba(0, 255, 102, 0.5); 
 }
 
-/* --- MUDANÇAS PARA OS BOTÕES --- */
 .btn-padrao {
   width: 100%;
-  padding: 12px;
-  background-image: linear-gradient(to right, var(--cor-primaria-final), var(--cor-primaria-hover));
-  color: white;
+  padding: 14px;
+  background-image: linear-gradient(to right, #00ff66, #00cc52);
+  color: #000; /* Contraste melhor para o mobile */
   border: none;
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
-  transition: background-image 0.3s, filter 0.2s, transform 0.1s;
-  font-size: 1rem; 
+  transition: filter 0.2s, transform 0.1s;
+  font-size: 1.05rem; 
+  text-transform: uppercase;
 }
 
 .btn-padrao:hover {
-  filter: brightness(1.2);
+  filter: brightness(1.1);
   transform: translateY(-2px);
 }
 
 .divisor-login {
   display: flex;
   align-items: center;
-  margin: 20px 0;
+  margin: 25px 0;
   color: #888;
   font-size: 0.9rem;
 }
@@ -119,7 +119,7 @@
 
 .btn-google {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background-color: #fff;
   color: #333;
   border: none;
@@ -127,13 +127,57 @@
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.1s;
-  font-size: 1rem;
+  font-size: 1.05rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.btn-google-icon {
+  margin-right: 12px;
+  font-size: 1.3rem;
+}
+
 .btn-google:hover {
   background-color: #e6e6e6;
   transform: translateY(-2px);
+}
+
+.link-cadastro {
+  margin-top: 20px;
+  color: #00cc44;
+  cursor: pointer;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* =========================================
+   RESPONSIVIDADE MOBILE (Ex: Galaxy A54)
+========================================= */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 15px;
+    align-items: flex-start; /* Joga a caixa pro topo pra não brigar com o teclado */
+    padding-top: 8vh; 
+  }
+
+  .login-box {
+    padding: 30px 20px;
+  }
+
+  .login-box input, 
+  .btn-padrao, 
+  .btn-google {
+    padding: 16px; /* Aumenta a área de toque (Touch Target) para o dedo */
+  }
+
+  .login-box input {
+    padding-left: 45px; 
+    padding-right: 45px; 
+  }
+
+  .link-cadastro {
+    padding: 15px 0; /* Dá espaço ao redor do link para evitar cliques acidentais */
+    display: block;
+  }
 }

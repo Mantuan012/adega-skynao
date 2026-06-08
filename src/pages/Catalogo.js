@@ -8,7 +8,6 @@ import { db } from '../firebase/firebaseConfig';
 import './Catalogo.css'; 
 import FormularioProduto from '../components/FormularioProduto';
 
-// Adicionamos a prop showToast aqui!
 function Catalogo({ isDono, showToast }) {
   const [termoBusca, setTermoBusca] = useState('');
   const [categoriasAtivas, setCategoriasAtivas] = useState([]);
@@ -18,7 +17,6 @@ function Catalogo({ isDono, showToast }) {
   const [editingProduct, setEditingProduct] = useState(null);
   const [salvando, setSalvando] = useState(false);
   
-  // O NOVO ESTADO DO MODAL DE CONFIRMAÇÃO
   const [modalConfirmacao, setModalConfirmacao] = useState({ visivel: false, titulo: '', mensagem: '', acao: null });
   
   const [categoriasBD, setCategoriasBD] = useState([]);
@@ -53,7 +51,6 @@ function Catalogo({ isDono, showToast }) {
     }
   };
 
-  // SUBSTITUÍDO O WINDOW.CONFIRM PELO NOSSO MODAL PREMIUM
   const handleExcluirCategoria = (id, nome) => {
     setModalConfirmacao({
       visivel: true,
@@ -103,7 +100,6 @@ function Catalogo({ isDono, showToast }) {
     setShowModal(true);
   };
 
-  // SUBSTITUÍDO O WINDOW.CONFIRM PELO NOSSO MODAL PREMIUM
   const excluirProduto = (produtoId) => {
     setModalConfirmacao({
       visivel: true,
@@ -244,7 +240,10 @@ function Catalogo({ isDono, showToast }) {
           <div className="produtos-grid">
             {produtosFiltrados.length === 0 ? (
               <div className="mensagem-vazio" style={{ gridColumn: '1 / -1' }}>
-                Nenhuma bebida encontrada com os filtros selecionados.
+                <div className="mascote-vazio-container">
+                  <img src="/mascote.jpeg" alt="Mascote Adega Skynão" className="mascote-img" />
+                  <span>Opa! Nenhuma bebida encontrada com esses filtros.</span>
+                </div>
               </div>
             ) : (
               produtosFiltrados.map((produto) => (
@@ -296,7 +295,7 @@ function Catalogo({ isDono, showToast }) {
         </div>
       )}
 
-      {/* O NOSSO NOVO MODAL DE CONFIRMAÇÃO PREMIUM */}
+      {/* MODAL DE CONFIRMAÇÃO PREMIUM */}
       {modalConfirmacao.visivel && (
         <div className="modal-overlay">
           <div className="modal-produto-conteudo" style={{ maxWidth: '400px', textAlign: 'center', padding: '30px' }}>

@@ -235,3 +235,222 @@
   background-color: rgba(255, 68, 68, 0.1);
   box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
 }
+
+/* =========================================
+   PAINEL DE GESTÃO DE USUÁRIOS
+========================================= */
+.gerenciamento-usuarios-container {
+  width: 100%;
+  display: block; /* Trava estrutural 1: Garante que o container ocupe a linha toda */
+}
+
+.busca-wrapper {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.icone-busca {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #00ff66;
+}
+
+.input-busca-usuarios {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 14px 14px 45px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background-color: #111;
+  color: #fff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.input-busca-usuarios:focus {
+  border-color: #00ff66;
+  box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+}
+
+/* =========================================
+   TABELA RESPONSIVA (COM SCROLL HORIZONTAL)
+========================================= */
+.tabela-usuarios-responsiva {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto; /* Habilita o scroll pro lado */
+  -webkit-overflow-scrolling: touch; /* Deixa o scroll suave no celular */
+  background-color: #1a1a1a;
+  border-radius: 10px;
+  border: 1px solid #333;
+  margin-bottom: 20px;
+  display: block; /* Trava estrutural 2: Impede que a tabela vaze do limite */
+}
+
+.tabela-usuarios {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px; /* Garante que as colunas não se esmaguem, forçando o scroll */
+}
+
+.coluna-nome { width: 45%; text-align: left; }
+.coluna-cargo { width: 25%; text-align: center; }
+.coluna-acoes { width: 30%; text-align: left; }
+
+.tabela-usuarios th, .tabela-usuarios td {
+  padding: 18px 25px;
+  vertical-align: middle;
+}
+
+.tabela-usuarios th {
+  background-color: #0d1a11;
+  color: #00ff66;
+  font-weight: bold;
+  border-bottom: 2px solid #333;
+  white-space: nowrap;
+}
+
+.tabela-usuarios td {
+  border-bottom: 1px solid #222;
+}
+
+.tabela-usuarios tbody tr:hover {
+  background-color: #222;
+}
+
+/* Informações do Usuário */
+.info-usuario {
+  display: flex;
+  flex-direction: column;
+}
+
+.nome-usuario {
+  color: #fff;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.email-usuario {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+/* =========================================
+   BADGES DE CARGO E TRAVAS
+========================================= */
+.badge-cargo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  white-space: nowrap;
+  width: 130px;
+}
+
+.badge-cargo.admin { background-color: rgba(243, 156, 18, 0.15); color: #f39c12; border: 1px solid #f39c12; }
+.badge-cargo.entregador { background-color: rgba(66, 133, 244, 0.15); color: #4285F4; border: 1px solid #4285F4; }
+.badge-cargo.cliente { background-color: rgba(136, 136, 136, 0.15); color: #aaa; border: 1px solid #555; }
+
+.admin-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+  font-weight: bold;
+  user-select: none;
+  padding: 8px 0;
+}
+
+/* =========================================
+   BOTÕES DE AÇÃO 
+========================================= */
+.acoes-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.btn-tabela {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.2s;
+  white-space: nowrap;
+  width: 140px;
+  text-align: center;
+}
+
+.btn-tabela:hover { filter: brightness(1.2); }
+.btn-tabela:active { transform: scale(0.95); }
+.btn-verde { background-color: #008a33; }
+.btn-vermelho { background-color: #cc0000; }
+
+.mensagem-vazia {
+  text-align: center;
+  padding: 30px;
+  color: #888;
+  font-size: 1.1rem;
+}
+
+.loading-text {
+  text-align: center;
+  color: #00ff66;
+  padding: 40px;
+  font-size: 1.2rem;
+}
+
+/* =========================================
+   PAGINAÇÃO (Ver Mais / Ver Menos)
+========================================= */
+.paginacao-usuarios {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+  padding: 10px 0;
+  width: 100%;
+  clear: both; /* Trava estrutural 3: Força a paginação a pular para baixo de qualquer elemento flutuante */
+}
+
+.btn-paginacao {
+  padding: 14px 0;
+  width: 220px;
+  text-align: center; 
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ver-mais { background-color: transparent; border: 2px solid #00ff66; color: #00ff66; }
+.btn-ver-mais:hover { background-color: rgba(0, 255, 102, 0.1); box-shadow: 0 0 10px rgba(0, 255, 102, 0.4); }
+
+.btn-ver-menos { background-color: transparent; border: 2px solid #ff4444; color: #ff4444; }
+.btn-ver-menos:hover { background-color: rgba(255, 68, 68, 0.1); box-shadow: 0 0 10px rgba(255, 68, 68, 0.4); }
+
+/* =========================================
+   RESPONSIVIDADE MOBILE
+========================================= */
+@media (max-width: 768px) {
+  .paginacao-usuarios {
+    flex-direction: column;
+    padding-bottom: 30px; /* Garante que não fique grudado na borda inferior do celular */
+  }
+
+  .btn-paginacao {
+    width: 100%;
+  }
+}

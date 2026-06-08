@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaMapMarkerAlt, FaShieldAlt, FaUserCircle, FaRoute, FaBoxOpen, FaMotorcycle, FaCheck, FaInfoCircle, FaUndo, FaListOl, FaTruckLoading, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaShieldAlt, FaRoute, FaBoxOpen, FaMotorcycle, FaCheck, FaInfoCircle, FaUndo, FaListOl, FaTruckLoading, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebaseConfig';
 import './PerfilEntregador.css';
@@ -14,19 +14,6 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
   const [modal, setModal] = useState({ isOpen: false, titulo: '', mensagem: '', acaoConfirmar: null });
 
   const entregadorId = auth.currentUser?.uid;
-  
-  // CORREÇÃO: Transformando a foto num estado reativo
-  const [fotoPerfil, setFotoPerfil] = useState(null);
-
-  // NOVO: "Espião" para garantir que a foto carregue mesmo se o React for mais rápido que o Firebase
-  useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setFotoPerfil(dadosUsuario?.foto || user.photoURL);
-      }
-    });
-    return () => unsubscribeAuth();
-  }, [dadosUsuario]);
 
   useEffect(() => {
     if (!entregadorId) return;
@@ -120,10 +107,10 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
 
   const abrirGPS = (pedido) => {
     const destino = encodeURIComponent(`${pedido.enderecoEntrega?.rua}, ${pedido.enderecoEntrega?.numero}, Pontal - SP`);
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destino}&travelmode=driving`, '_blank');
+    window.open(`http://googleusercontent.com/maps.google.com/?q=${destino}&travelmode=driving`, '_blank');
   };
 
-  if (carregando) return <div className="entregador-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh'}}><p style={{color: '#00ff66', fontSize: '1.2rem'}}>Sincronizando rotas...</p></div>;
+  if (carregando) return <div className="entregador-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh'}}><p style={{color: '#1b5e20', fontSize: '1.2rem'}}>Sincronizando rotas...</p></div>;
 
   return (
     <div className="entregador-wrapper">
@@ -141,13 +128,7 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
         </div>
       )}
 
-      <header className="perfil-card-profissional">
-        {/* A foto agora usa a variável reativa que atualiza junto com o Firebase */}
-        {fotoPerfil ? ( 
-          <img src={fotoPerfil} className="foto-perfil-circle" alt="Entregador" referrerPolicy="no-referrer" />
-        ) : ( 
-          <FaUserCircle size={100} color="#333" className="icon-perfil-placeholder" /> 
-        )}
+      <header className="perfil-card-profissional centralizado">
         <div className="perfil-info-profissional">
             <h2 className="entregador-nome">{dadosUsuario?.nome || 'Entregador'}</h2>
             <div className="stats-rapidos-profissional">
@@ -172,10 +153,10 @@ const PerfilEntregador = ({ showToast, dadosUsuario }) => {
                       <span className="info-id-pedido"><FaListOl /> ID Pedido: #{pedido.idPedido || pedido.docId.slice(0,6)}</span>
                       
                       <div className="botoes-card-profissional">
-                        <button onClick={() => devolverPedido(pedido)} className="btn-acao-card btn-amarelo">
+                        <button onClick={() => devolverPedido(pedido)} className="btn-acao-card btn-desfazer">
                           <FaUndo /> Devolver
                         </button>
-                        <button onClick={() => abrirGPS(pedido)} className="btn-acao-card btn-azul">
+                        <button onClick={() => abrirGPS(pedido)} className="btn-acao-card btn-rota">
                           <FaRoute /> Rota GPS
                         </button>
                       </div>

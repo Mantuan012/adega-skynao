@@ -224,12 +224,16 @@
 
 /* 🟠 Botão Laranja (Desfazer Despacho) */
 .btn-laranja {
-  background: transparent;
-  border: 2px solid #ffaa00;
-  color: #ffaa00;
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 5px 15px rgba(230, 126, 34, 0.25);
 }
+
 .btn-laranja:hover {
-  background: rgba(255, 170, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(230, 126, 34, 0.4);
+  filter: brightness(1.1);
+  transform: translateY(-3px);
 }
 
 /* =========================================
@@ -273,6 +277,19 @@
 .btn-ver-menos:hover {
   background-color: #ff4444;
   color: #fff;
+}
+
+/* 🟢 Desfazer Saída (verde escuro) */
+.btn-desfazer-saida {
+  background: linear-gradient(135deg, #0d3d14 0%, #1b5e20 100%);
+  color: #ffffff;
+  border: 1px solid #2e7d32;
+  box-shadow: 0 5px 15px rgba(27, 94, 32, 0.3);
+}
+
+.btn-desfazer-saida:hover {
+  box-shadow: 0 8px 20px rgba(27, 94, 32, 0.5);
+  filter: brightness(1.15);
 }
 
 /* =========================================
