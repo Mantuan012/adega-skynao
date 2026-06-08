@@ -1,92 +1,80 @@
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
 
 export const gerarRelatorioPremium = async (pedidos, faturamento, quantidade, filtro) => {
   const doc = new jsPDF("p", "mm", "a4");
+  const verdeAdega = [0, 255, 102];
+  const cinzaEscuro = [30, 30, 30];
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  let pageNumber = 1;
-
-  // --- FILTRAGEM DE DADOS (Base de inteligência) ---
-  const agora = dayjs();
-  let pedidosFiltrados = pedidos.filter((p) => p.status === "Entregue");
-  if (filtro === "hoje") pedidosFiltrados = pedidosFiltrados.filter((p) => dayjs(p.data).isSame(agora, "day"));
-  else if (filtro === "7dias") pedidosFiltrados = pedidosFiltrados.filter((p) => dayjs(p.data).isAfter(agora.subtract(7, "day")));
-  else if (filtro === "mes") pedidosFiltrados = pedidosFiltrados.filter((p) => dayjs(p.data).isSame(agora, "month"));
-
-  // Lógica de insights
-  let itensTotais = 0;
-  const agrupamentoPgto = {};
-  pedidosFiltrados.forEach((p) => {
-    p.itens?.forEach(item => { itensTotais += item.quantidade; });
-    const f = p.formaPagamento || "Outros";
-    agrupamentoPgto[f] = (agrupamentoPgto[f] || 0) + 1;
-  });
-
-  // --- FUNÇÕES DE DESENHO (Layout Profissional) ---
+  
+  // --- FUNÇÕES DE LAYOUT ---
   const drawHeader = () => {
-    doc.setFillColor(15, 15, 15);
+    doc.setFillColor(...cinzaEscuro);
     doc.rect(0, 0, pageWidth, 25, "F");
-    doc.setTextColor(0, 255, 102);
+    doc.setTextColor(...verdeAdega);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
-    doc.text("ADEGA SKYNÃO - RELATÓRIO DE VENDAS", 14, 15);
-    doc.setFontSize(9);
-    doc.setTextColor(255, 255, 255);
-    doc.text(`Período: ${filtro.toUpperCase()} | Emitido em: ${dayjs().format("DD/MM/YYYY HH:mm")}`, 14, 21);
+    doc.text("ADEGA SKYNÃO - RELATÓRIO PROFISSIONAL", 14, 15);
   };
 
-  const drawFooter = () => {
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text(`Página ${pageNumber}`, pageWidth / 2, pageHeight - 10, { align: "center" });
-  };
-
-  // --- CAPA E RESUMO ---
+  const pedidosFiltrados = pedidos.filter(p => p.status === "Entregue");
+  
+  // --- 1. RESUMO EXECUTIVO (Tabela Detalhada) ---
   drawHeader();
-  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0);
   doc.setFontSize(14);
-  doc.text("1. RESUMO EXECUTIVO", 14, 40);
-  
-  const ticketMedio = quantidade > 0 ? (faturamento / quantidade) : 0;
-  
-  doc.autoTable({
+  doc.text("1. RESUMO E INDICADORES", 14, 40);
+
+  autoTable(doc, {
     startY: 45,
-    head: [['Indicador', 'Valor']],
+    head: [['Indicador', 'Valor / Detalhe']],
     body: [
+      ['Faturamento Total', `R$ ${faturamento.toFixed(2)}`],
       ['Total de Pedidos', `${quantidade} pedidos`],
-      ['Faturamento Bruto', `R$ ${faturamento.toFixed(2)}`],
-      ['Ticket Médio', `R$ ${ticketMedio.toFixed(2)}`],
-      ['Produtos Vendidos', `${itensTotais} unidades`]
+      ['Ticket Médio', `R$ ${(quantidade > 0 ? faturamento/quantidade : 0).toFixed(2)}`],
+      ['Período Analisado', filtro.toUpperCase()]
     ],
-    theme: 'striped',
-    headStyles: { fillColor: [0, 150, 60] }
+    theme: 'grid',
+    headStyles: { fillColor: cinzaEscuro, textColor: verdeAdega }
   });
 
-  // --- TABELA DETALHADA (Aqui está o segredo para ser leve e mobile) ---
+  // --- 2. GRÁFICO ANALÍTICO COM VALORES (Barras com Legenda) ---
+  const pagamentos = pedidosFiltrados.reduce((acc, p) => {
+    acc[p.formaPagamento] = (acc[p.formaPagamento] || 0) + 1;
+    return acc;
+  }, {});
+
+  doc.text("2. DISTRIBUIÇÃO DE PAGAMENTOS (QUANTIDADE)", 14, 100);
+  
+  let yPos = 110;
+  Object.entries(pagamentos).forEach(([metodo, qtd]) => {
+    // Adiciona o valor explicitamente ao lado da barra
+    doc.setFontSize(10);
+    doc.text(`${metodo}: ${qtd} pedidos`, 14, yPos);
+    doc.setFillColor(...verdeAdega);
+    doc.rect(14, yPos + 2, (qtd / quantidade) * 100, 6, "F");
+    yPos += 15;
+  });
+
+  // --- 3. DETALHAMENTO DE PEDIDOS (Com Datas e Totais) ---
   doc.addPage();
-  pageNumber++;
   drawHeader();
-  doc.setFontSize(14);
-  doc.text("2. DETALHAMENTO DE PEDIDOS", 14, 40);
+  doc.text("3. DETALHAMENTO ANALÍTICO DE PEDIDOS", 14, 40);
 
-  const tabelaDados = pedidosFiltrados.map(p => [
-    `#${p.idPedido || '---'}`,
-    p.enderecoEntrega?.nome || 'Cliente',
-    dayjs(p.data).format("DD/MM HH:mm"),
-    p.formaPagamento || 'N/A',
-    `R$ ${p.total?.toFixed(2)}`
-  ]);
-
-  doc.autoTable({
+  autoTable(doc, {
     startY: 45,
-    head: [['ID', 'Cliente', 'Data', 'Pagamento', 'Total']],
-    body: tabelaDados,
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [15, 15, 15] }
+    head: [['ID', 'Cliente', 'Data', 'Pagamento', 'Valor']],
+    body: pedidosFiltrados.map(p => [
+      `#${p.idPedido}`,
+      p.enderecoEntrega?.nome || 'Cliente',
+      dayjs(p.data).format("DD/MM/YYYY HH:mm"),
+      p.formaPagamento,
+      `R$ ${p.total.toFixed(2)}`
+    ]),
+    headStyles: { fillColor: cinzaEscuro, textColor: verdeAdega },
+    columnStyles: { 4: { halign: 'right' } }
   });
 
-  drawFooter();
-  doc.save(`Relatorio_Vendas_${dayjs().format("DD-MM-YYYY")}.pdf`);
+  doc.save(`Relatorio_Skynao_${dayjs().format("DDMMYY")}.pdf`);
 };

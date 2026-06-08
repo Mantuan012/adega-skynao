@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "../firebase/firebaseConfig";
 import { FaSpinner, FaBan } from "react-icons/fa";
+import { QRCodeSVG } from "qrcode.react"; // Importação necessária
 
 // Agora importamos direto com o nome verdadeiro do arquivo!
 import TabelaUsuarios from "../components/TabelaUsuarios";
@@ -41,6 +42,17 @@ export default function GerenciamentoUsuarios() {
   return (
     <div className="cartao">
       <h2 className="dash-title" style={{ color: '#00ff66', marginBottom: '25px', textAlign: 'center' }}>Gestão de Equipe e Usuários</h2>
+      
+      {/* Container do QR Code para Divulgação */}
+      <div style={{ 
+        display: 'flex', flexDirection: 'column', alignItems: 'center', 
+        marginBottom: '30px', padding: '15px', border: '1px solid #333', 
+        borderRadius: '10px', backgroundColor: '#1a1a1a' 
+      }}>
+        <h4 style={{ color: '#00ff66', marginBottom: '10px' }}>QR Code de Acesso</h4>
+        <QRCodeSVG value="https://adega-skynao.web.app" size={120} level={"H"} />
+        <p style={{ fontSize: '12px', marginTop: '10px', color: '#888' }}>Use para divulgar o sistema</p>
+      </div>
       
       <TabelaUsuarios usuarios={usuarios} alterarCargo={alterarCargo} loadingUsuarios={loadingUsuarios} />
     </div>
